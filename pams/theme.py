@@ -109,47 +109,6 @@ _THEMES: list[tuple[str, dict]] = [
         "info":          "#818CF8",
         "info_light":    "#1E1B4B",
     }),
-
-    # ─── 3. MIDNIGHT — Rich sapphire with teal/cyan accents ───
-    ("✦  Midnight", {
-        "bg_base":       "#070B18",
-        "bg_surface":    "#0C1125",
-        "bg_card":       "#111830",
-        "bg_card_hover": "#182040",
-        "bg_sidebar":    "#060918",
-        "bg_input":      "#182040",
-        "bg_row_alt":    "#0E1328",
-        "bg_overlay":    "#1A2348",
-        "accent":        "#22D3EE",
-        "accent_dim":    "#06B6D4",
-        "accent_glow":   "#083344",
-        "accent_light":  "#67E8F9",
-        "accent_ultra":  "#164E63",
-        "accent2":       "#7DD3FC",
-        "accent2_dim":   "#38BDF8",
-        "text_primary":  "#E4EAF8",
-        "text_secondary":"#8DA0C2",
-        "text_muted":    "#4A5E80",
-        "text_on_accent":"#03101C",
-        "text_link":     "#22D3EE",
-        "border":        "#1A2348",
-        "border_focus":  "#22D3EE",
-        "divider":       "#152038",
-        "shadow_sm":     "#030510",
-        "shadow_md":     "#02040C",
-        "shadow_lg":     "#010308",
-        "nav_text":      "#7090B8",
-        "nav_active_bg": "#1A2348",
-        "nav_hover_bg":  "#131A35",
-        "success":       "#2DD4BF",
-        "success_light": "#042F2E",
-        "warning":       "#FCD34D",
-        "warning_light": "#713F12",
-        "danger":        "#FB7185",
-        "danger_light":  "#881337",
-        "info":          "#38BDF8",
-        "info_light":    "#0C4A6E",
-    }),
 ]
 
 THEME_NAMES = [t[0] for t in _THEMES]
@@ -173,8 +132,8 @@ def get_theme_index() -> int:
 
 
 def is_dark_theme() -> bool:
-    """Return True if the current theme has a dark background (Dark or Midnight)."""
-    return CURRENT_THEME_IDX in (1, 2)
+    """Return True if the current theme is Dark (index 1)."""
+    return CURRENT_THEME_IDX == 1
 
 
 def lerp_color(hex1: str, hex2: str, t: float) -> str:
