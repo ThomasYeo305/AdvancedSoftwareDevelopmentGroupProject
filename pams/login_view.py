@@ -19,7 +19,7 @@ from PySide6.QtGui import (
 from .theme import PALETTE as P, FONTS as F, DIMS as D, lerp_color, is_dark_theme
 from .widgets import qfont, styled_button, _blend, Toast
 from . import theme as _theme
-from . import database as db
+from . import database2 as db
 
 
 def _make_eye_icon(visible: bool, color: str = "#9CA3AF") -> QIcon:

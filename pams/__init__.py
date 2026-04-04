@@ -1,2 +1,2 @@
 # PAMS — Paragon Apartment Management System
-from . import database
+from . import database2

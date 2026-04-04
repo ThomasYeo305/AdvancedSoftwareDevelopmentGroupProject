@@ -19,7 +19,7 @@ from ..widgets import (
     table_insert, table_selected_id, badge_text, styled_button, Toast,
     STATUS_COLORS,
 )
-from .. import database as db
+from .. import database2 as db
 
 _NI_RE    = re.compile(r'^(NI-)?[A-Z]{2}\d{6}[A-Z]$', re.IGNORECASE)
 _EMAIL_RE = re.compile(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')

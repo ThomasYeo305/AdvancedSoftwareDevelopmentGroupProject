@@ -32,8 +32,9 @@ _configure_qt_plugin_paths()
 from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QFontDatabase
 
-from pams import database as db
+from pams import database2 as db
 from pams.theme import PALETTE as P, get_global_qss, cycle_theme
 
 
@@ -134,6 +135,20 @@ if __name__ == "__main__":
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 
     app = QApplication(sys.argv)
+    # "Segoe UI" is Windows-only; resolve a cross-platform substitute before
+    # any widget is created so every QFont("Segoe UI", ...) call silently maps
+    # to the correct font automatically (eliminates the 50 ms alias warning).
+    import sys as _sys, platform as _platform
+    # Pick the first installed font from the preference list.
+    _families = set(QFontDatabase.families())
+    _fallback = next(
+        (f for f in ("Helvetica Neue", "Arial", "Trebuchet MS",
+                     "Liberation Sans", "DejaVu Sans")
+         if f in _families),
+        None,
+    )
+    if _fallback:
+        QFont.insertSubstitution("Segoe UI", _fallback)
     app.setFont(QFont("Segoe UI", 10))
     app.setStyleSheet(get_global_qss())
 
