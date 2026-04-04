@@ -12,17 +12,19 @@ from PySide6.QtWidgets import (
     QPushButton, QScrollArea, QSizePolicy, QLineEdit, QSpacerItem,
     QGraphicsDropShadowEffect,
 )
-from PySide6.QtCore import Qt, QRectF, Signal
+from PySide6.QtCore import Qt, QRectF, Signal, QTimer, QPointF
 from PySide6.QtGui import (
-    QFont, QColor, QPainter, QLinearGradient, QPen, QPixmap, QIcon,
+    QFont, QColor, QPainter, QLinearGradient, QConicalGradient,
+    QRadialGradient, QPen, QPixmap, QIcon, QPainterPath,
 )
+import math
 
 from .theme import (
     PALETTE as P, FONTS as F, DIMS as D,
     NAV_ITEMS, ROLE_COLORS, lerp_color, is_dark_theme,
 )
 from . import theme as _theme  # needed to read CURRENT_THEME_IDX at runtime
-from .widgets import qfont, Toast, _blend
+from .widgets import qfont, Toast, _blend, draw_key_icon
 
 
 def _readable_on(hex_color: str) -> str:
@@ -96,10 +98,10 @@ class Sidebar(QWidget):
         bl = QHBoxLayout(brand)
         bl.setContentsMargins(16, D.pad_lg, 12, D.pad_md)
 
-        # Logo circle
+        # Logo circle — now fully animated 3D glossy
         _logo_color = lerp_color(self._accent, P.accent, 0.40)
         logo = _LogoCircle(_logo_color)
-        logo.setFixedSize(48, 48)
+        logo.setFixedSize(56, 56)
         logo.theme_clicked.connect(self.theme_requested.emit)
         bl.addWidget(logo)
 
@@ -190,9 +192,17 @@ class Sidebar(QWidget):
         il = QVBoxLayout(info)
         il.setContentsMargins(10, 0, 0, 0)
         il.setSpacing(1)
-        nm = QLabel(self._user["full_name"][:20])
+        nm = QLabel(self._user["full_name"])
         nm.setFont(QFont("Segoe UI", 10, QFont.Bold))
         nm.setStyleSheet(f"color: {self._nav_text};")
+        nm.setMaximumWidth(D.sidebar_w - 100)
+        nm.setMinimumWidth(0)
+        nm.setSizePolicy(nm.sizePolicy().horizontalPolicy(), nm.sizePolicy().verticalPolicy())
+        from PySide6.QtCore import Qt as _Qt
+        nm.setWordWrap(False)
+        fm = nm.fontMetrics()
+        elided = fm.elidedText(self._user["full_name"], _Qt.ElideRight, D.sidebar_w - 104)
+        nm.setText(elided)
         il.addWidget(nm)
         rl = QLabel(self._user["role"])
         rl.setFont(QFont("Segoe UI", 9))
@@ -200,21 +210,31 @@ class Sidebar(QWidget):
         il.addWidget(rl)
         pl.addWidget(info, 1)
 
-        # Logout button — pill shaped
-        logout = QPushButton("LOGOUT")
-        logout.setFont(QFont("Segoe UI", 13))
+        # Logout button — glossy pill with icon
+        logout = QPushButton("⏻  Logout")
+        logout.setFont(QFont("Segoe UI", 10, QFont.Bold))
         logout.setCursor(Qt.PointingHandCursor)
-        logout.setFixedSize(88, 36)
-        logout_bg = lerp_color(self._bg, "#FFFFFF", 0.06 if self._glow else 0.12)
+        logout.setFixedSize(100, 36)
         logout.setStyleSheet(f"""
             QPushButton {{
-                background: {logout_bg}; color: {self._nav_text_dim};
-                border: 1px solid {lerp_color(self._bg, "#FFFFFF", 0.15)};
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 {lerp_color(self._bg, "#300010", 0.35)},
+                    stop:1 {lerp_color(self._bg, "#000000", 0.25)});
+                color: {lerp_color(self._nav_text, P.danger, 0.4)};
+                border: 1.5px solid {lerp_color(P.danger, self._bg, 0.65)};
                 border-radius: 18px;
+                letter-spacing: 0.5px;
             }}
             QPushButton:hover {{
-                color: {P.danger}; background: {lerp_color(P.danger, self._bg, 0.85)};
-                border-color: {lerp_color(P.danger, self._bg, 0.50)};
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 {lerp_color(P.danger, "#000000", 0.55)},
+                    stop:1 {lerp_color(P.danger, "#000000", 0.75)});
+                color: #FFFFFF;
+                border: 1.5px solid {lerp_color(P.danger, "#FFFFFF", 0.25)};
+            }}
+            QPushButton:pressed {{
+                background: {lerp_color(P.danger, "#000000", 0.40)};
+                color: #FFFFFF;
             }}
         """)
         logout.clicked.connect(self._on_logout)
@@ -257,7 +277,7 @@ class _NavItem(QWidget):
         self._accent_color = accent_color or nav_active
         self._text_on_hl = _readable_on(bg)
 
-        self.setFixedHeight(48)
+        self.setFixedHeight(52)
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet("background: transparent;")
 
@@ -283,41 +303,61 @@ class _NavItem(QWidget):
         r = QRectF(3, 2, w - 6, h - 4)
 
         if self._active:
-            # Soft rounded active background
+            # Glossy gradient active background
             p.setPen(Qt.NoPen)
-            p.setBrush(QColor(self._nav_active))
+            active_grad = QLinearGradient(0, 0, w, h)
+            active_grad.setColorAt(0.0, QColor(lerp_color(self._accent_color, "#FFFFFF", 0.18)))
+            active_grad.setColorAt(0.5, QColor(self._nav_active))
+            active_grad.setColorAt(1.0, QColor(lerp_color(self._nav_active, "#000000", 0.10)))
+            p.setBrush(active_grad)
             p.drawRoundedRect(r, 14, 14)
 
-            # Glowing accent indicator bar on left
-            accent = QColor(self._accent_color)
-            p.setBrush(accent)
-            p.drawRoundedRect(QRectF(3, 10, 4, h - 20), 2, 2)
+            # Top gloss sheen
+            gloss_rect = QRectF(4, 3, w - 8, (h - 6) * 0.45)
+            gloss_grad = QLinearGradient(0, gloss_rect.top(), 0, gloss_rect.bottom())
+            gloss_grad.setColorAt(0.0, QColor(255, 255, 255, 38))
+            gloss_grad.setColorAt(1.0, QColor(255, 255, 255, 0))
+            p.setBrush(gloss_grad)
+            p.drawRoundedRect(gloss_rect, 12, 12)
 
-            # Subtle accent glow behind the bar (if dark)
-            if self._glow:
-                glow_col = QColor(self._accent_color)
-                glow_col.setAlpha(25)
-                p.setBrush(glow_col)
-                p.drawRoundedRect(QRectF(1, 6, 8, h - 12), 4, 4)
+            # Left indicator bar — thick vibrant glowing
+            bar_grad = QLinearGradient(0, 8, 0, h - 8)
+            bar_grad.setColorAt(0.0, QColor(lerp_color(self._accent_color, "#FFFFFF", 0.60)))
+            bar_grad.setColorAt(0.5, QColor(self._accent_color))
+            bar_grad.setColorAt(1.0, QColor(lerp_color(self._accent_color, "#000000", 0.30)))
+            p.setBrush(bar_grad)
+            p.drawRoundedRect(QRectF(3, 8, 5, h - 16), 3, 3)
+
+            # Left bar outer glow
+            glow_col = QColor(self._accent_color)
+            glow_col.setAlpha(40)
+            p.setBrush(glow_col)
+            p.drawRoundedRect(QRectF(1, 5, 9, h - 10), 4, 4)
 
             text_col = QColor(self._text_on_hl)
+
         elif self._hover:
             p.setPen(Qt.NoPen)
-            p.setBrush(QColor(self._nav_hover))
+            hover_grad = QLinearGradient(0, 0, w, h)
+            hover_grad.setColorAt(0.0, QColor(lerp_color(self._nav_hover, "#FFFFFF", 0.08)))
+            hover_grad.setColorAt(1.0, QColor(self._nav_hover))
+            p.setBrush(hover_grad)
             p.drawRoundedRect(r, 14, 14)
             text_col = QColor(self._text_on_hl)
         else:
             text_col = QColor(self._nav_text)
 
-        # Icon
-        p.setPen(text_col)
-        p.setFont(QFont("Segoe UI", 15))
-        p.drawText(QRectF(14, 0, 36, h), Qt.AlignCenter, self._icon)
+        # Custom vector icon — drawn by key, no emoji/text
+        icon_cx = 30.0
+        icon_cy = h / 2
+        icon_size = h * 0.36
+        draw_key_icon(p, self._key, icon_cx, icon_cy, icon_size, text_col)
 
-        # Label
+        # Label text
         font = QFont("Segoe UI", 11, QFont.Bold if self._active else QFont.Normal)
+        font.setLetterSpacing(QFont.AbsoluteSpacing, 0.3 if self._active else 0)
         p.setFont(font)
-        label_rect = QRectF(52, 0, w - 58, h)
+        label_rect = QRectF(56, 0, w - 62, h)
         p.setPen(text_col)
         p.drawText(label_rect, Qt.AlignVCenter | Qt.AlignLeft, self._label)
         p.end()
@@ -660,21 +700,35 @@ class MainApp(QWidget):
 # INTERNAL HELPER WIDGETS
 # ──────────────────────────────────────────────────────────
 class _LogoCircle(QWidget):
+    """Animated 3D glossy logo — rotating gradient ring, inner glow, shimmer highlight."""
     theme_clicked = Signal()
 
     def __init__(self, bg, parent=None):
         super().__init__(parent)
         self._bg = bg
         self._hover = False
+        self._angle = 0
+        self._pulse = 0.0
+        self._pulse_dir = 1
         self.setCursor(Qt.PointingHandCursor)
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._tick)
+        self._timer.start(30)
+
+    def _tick(self):
+        self._angle = (self._angle + 3) % 360
+        self._pulse += 0.04 * self._pulse_dir
+        if self._pulse >= 1.0:
+            self._pulse = 1.0; self._pulse_dir = -1
+        elif self._pulse <= 0.0:
+            self._pulse = 0.0; self._pulse_dir = 1
+        self.update()
 
     def enterEvent(self, event):
-        self._hover = True
-        self.update()
+        self._hover = True; self.update()
 
     def leaveEvent(self, event):
-        self._hover = False
-        self.update()
+        self._hover = False; self.update()
 
     def mousePressEvent(self, event):
         self.theme_clicked.emit()
@@ -683,24 +737,74 @@ class _LogoCircle(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         s = min(self.width(), self.height())
+        cx, cy = s / 2, s / 2
+        r = s / 2 - 3
+
+        # ── Outer rotating rainbow/gradient ring ──
+        ring_grad = QConicalGradient(cx, cy, self._angle)
         if self._hover:
-            # Fill fully with theme accent on hover (matches login logo hover)
-            p.setPen(Qt.NoPen)
-            p.setBrush(QColor(P.accent))
-            p.drawEllipse(QRectF(0, 0, s, s))
-            p.setPen(QPen(QColor(lerp_color(P.accent, "#FFFFFF", 0.55)), 1.5))
-            p.setBrush(Qt.NoBrush)
-            p.drawEllipse(QRectF(3, 3, s - 6, s - 6))
+            ring_grad.setColorAt(0.00, QColor("#FF6FD8"))
+            ring_grad.setColorAt(0.20, QColor("#6366F1"))
+            ring_grad.setColorAt(0.40, QColor("#06B6D4"))
+            ring_grad.setColorAt(0.60, QColor("#10B981"))
+            ring_grad.setColorAt(0.80, QColor("#F59E0B"))
+            ring_grad.setColorAt(1.00, QColor("#FF6FD8"))
         else:
-            glow = QColor(lerp_color(self._bg, "#FFFFFF", 0.08))
-            p.setPen(Qt.NoPen); p.setBrush(glow)
-            p.drawEllipse(QRectF(0, 0, s, s))
-            ring = QColor(lerp_color(self._bg, "#FFFFFF", 0.18))
-            p.setBrush(ring)
-            p.setPen(QPen(QColor("#FFFFFF"), 1.5))
-            p.drawEllipse(QRectF(3, 3, s - 6, s - 6))
+            ring_grad.setColorAt(0.00, QColor(P.accent))
+            ring_grad.setColorAt(0.33, QColor(lerp_color(P.accent, "#8B5CF6", 0.6)))
+            ring_grad.setColorAt(0.66, QColor("#06B6D4"))
+            ring_grad.setColorAt(1.00, QColor(P.accent))
+        pen = QPen(ring_grad, 3.5)
+        p.setPen(pen)
+        p.setBrush(Qt.NoBrush)
+        p.drawEllipse(QRectF(2, 2, s - 4, s - 4))
+
+        # ── Deep glossy sphere background ──
+        sphere_grad = QRadialGradient(cx - r * 0.28, cy - r * 0.32, r * 1.15)
+        pulse_val = 0.12 + self._pulse * 0.10
+        if self._hover:
+            sphere_grad.setColorAt(0.0, QColor(lerp_color("#9B59F5", "#FFFFFF", 0.25)))
+            sphere_grad.setColorAt(0.45, QColor("#5B21B6"))
+            sphere_grad.setColorAt(0.80, QColor("#1E1B4B"))
+            sphere_grad.setColorAt(1.0, QColor("#0C0A1E"))
+        else:
+            sphere_grad.setColorAt(0.0, QColor(lerp_color(P.accent, "#FFFFFF", 0.35)))
+            sphere_grad.setColorAt(0.40, QColor(lerp_color(P.accent, "#000033", 0.35)))
+            sphere_grad.setColorAt(0.75, QColor(lerp_color(P.accent, "#000022", 0.70)))
+            sphere_grad.setColorAt(1.0, QColor(lerp_color(self._bg, "#000000", 0.30)))
+        p.setPen(Qt.NoPen)
+        p.setBrush(sphere_grad)
+        p.drawEllipse(QRectF(5, 5, s - 10, s - 10))
+
+        # ── Top-left specular highlight (gloss) ──
+        gloss = QRadialGradient(cx - r * 0.30, cy - r * 0.40, r * 0.55)
+        gloss_alpha = int(180 + self._pulse * 55)
+        gloss.setColorAt(0.0, QColor(255, 255, 255, gloss_alpha))
+        gloss.setColorAt(0.5, QColor(255, 255, 255, 60))
+        gloss.setColorAt(1.0, QColor(255, 255, 255, 0))
+        p.setBrush(gloss)
+        p.drawEllipse(QRectF(8, 8, (s - 16) * 0.72, (s - 16) * 0.52))
+
+        # ── Bottom-right subtle rim light ──
+        rim = QRadialGradient(cx + r * 0.50, cy + r * 0.50, r * 0.40)
+        rim.setColorAt(0.0, QColor(120, 160, 255, 80))
+        rim.setColorAt(1.0, QColor(120, 160, 255, 0))
+        p.setBrush(rim)
+        p.drawEllipse(QRectF(s * 0.45, s * 0.45, s * 0.52, s * 0.52))
+
+        # ── Pulsing outer glow ──
+        glow_a = int(18 + self._pulse * 38)
+        glow_col = QColor(P.accent if not self._hover else "#9B59F5")
+        glow_col.setAlpha(glow_a)
+        for glow_r in range(3):
+            g2 = QColor(glow_col)
+            g2.setAlpha(glow_a - glow_r * 6)
+            p.setPen(QPen(g2, 2.5 - glow_r * 0.6))
+            p.drawEllipse(QRectF(glow_r, glow_r, s - glow_r * 2, s - glow_r * 2))
+
+        # ── P letter — clean bold font ──
         p.setPen(QColor("#FFFFFF"))
-        p.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        p.setFont(QFont("Segoe UI", int(s * 0.32), QFont.Bold))
         p.drawText(QRectF(0, 0, s, s), Qt.AlignCenter, "P")
         p.end()
 
@@ -710,20 +814,40 @@ class _AvatarCircle(QWidget):
         super().__init__(parent)
         self._initials = initials
         self._bg = bg
+
     def paintEvent(self, event):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         s = min(self.width(), self.height())
-        glow = QColor(lerp_color(self._bg, "#FFFFFF", 0.06))
-        p.setPen(Qt.NoPen); p.setBrush(glow)
-        p.drawEllipse(QRectF(0, 0, s, s))
-        fill = QColor(lerp_color(self._bg, "#FFFFFF", 0.18))
-        p.setBrush(fill)
-        accent = QColor(lerp_color(self._bg, "#FFFFFF", 0.60))
-        p.setPen(QPen(accent, 1.5))
-        p.drawEllipse(QRectF(3, 3, s - 6, s - 6))
+        cx, cy = s / 2, s / 2
+        r = s / 2 - 2
+
+        # Outer ring
+        ring_col = QColor(lerp_color(self._bg, "#FFFFFF", 0.40))
+        p.setPen(QPen(ring_col, 2))
+        p.setBrush(Qt.NoBrush)
+        p.drawEllipse(QRectF(1, 1, s - 2, s - 2))
+
+        # Body
+        body_grad = QRadialGradient(cx - r * 0.25, cy - r * 0.3, r * 1.0)
+        body_grad.setColorAt(0.0, QColor(lerp_color(self._bg, "#FFFFFF", 0.35)))
+        body_grad.setColorAt(0.5, QColor(lerp_color(self._bg, "#FFFFFF", 0.18)))
+        body_grad.setColorAt(1.0, QColor(lerp_color(self._bg, "#000000", 0.15)))
+        p.setPen(Qt.NoPen)
+        p.setBrush(body_grad)
+        p.drawEllipse(QRectF(4, 4, s - 8, s - 8))
+
+        # Gloss
+        gloss = QRadialGradient(cx - r * 0.22, cy - r * 0.30, r * 0.50)
+        gloss.setColorAt(0.0, QColor(255, 255, 255, 130))
+        gloss.setColorAt(1.0, QColor(255, 255, 255, 0))
+        p.setBrush(gloss)
+        p.drawEllipse(QRectF(6, 6, (s - 12) * 0.65, (s - 12) * 0.48))
+
+        # Initials
+        accent = QColor(lerp_color(self._bg, "#FFFFFF", 0.85))
         p.setPen(accent)
-        p.setFont(qfont(F.small_bold))
+        p.setFont(QFont("Segoe UI", 11, QFont.Bold))
         p.drawText(QRectF(0, 0, s, s), Qt.AlignCenter, self._initials)
         p.end()
 

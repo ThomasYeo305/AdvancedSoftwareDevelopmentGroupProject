@@ -10,10 +10,10 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QFrame, QSizePolicy, QSpacerItem,
 )
-from PySide6.QtCore import Qt, QTimer, QRectF, Signal
+from PySide6.QtCore import Qt, QTimer, QRectF, QPointF, Signal
 from PySide6.QtGui import (
     QFont, QColor, QPainter, QLinearGradient, QRadialGradient,
-    QPen, QBrush, QIcon, QPixmap, QAction,
+    QConicalGradient, QPen, QBrush, QIcon, QPixmap, QAction, QPainterPath,
 )
 
 from .theme import PALETTE as P, FONTS as F, DIMS as D, lerp_color, is_dark_theme
@@ -157,16 +157,7 @@ class LoginView(QWidget):
         fl.setContentsMargins(14, 0, 14, 0)
 
         # Logo + brand
-        logo = QPushButton("P")
-        logo.setFixedSize(52, 52)
-        logo.setFont(QFont("Segoe UI", 16, QFont.Bold))
-        logo.setCursor(Qt.PointingHandCursor)
-        logo.setToolTip("Click to change theme")
-        logo.setStyleSheet(
-            f"QPushButton {{ background-color: {_blend(P.accent, P.bg_card, 0.86)}; "
-            f"color: {P.accent}; border-radius: 26px; "
-            f"border: 2px solid {P.accent}; }}"
-            f"QPushButton:hover {{ background-color: {P.accent}; color: #FFFFFF; }}")
+        logo = _AnimatedLogoWidget()
         logo.clicked.connect(self.theme_requested.emit)
         fl.addWidget(logo, 0, Qt.AlignCenter)
 
@@ -559,15 +550,113 @@ class _AnimatedPanel(QWidget):
         p.setBrush(inner_c)
         p.drawEllipse(QRectF(cx - r + 8, cy - r + 8, (r-8)*2, (r-8)*2))
 
-        # "P"
+        # "P" — clean bold font
         p.setPen(QColor("#FFFFFF"))
-        p.setFont(QFont("Segoe UI", 19, QFont.Bold))
-        p.drawText(QRectF(cx - r, cy - r, r*2, r*2), Qt.AlignCenter, "P")
+        p.setFont(QFont("Segoe UI", int(r * 0.72), QFont.Bold))
+        p.drawText(QRectF(cx - r, cy - r, r * 2, r * 2), Qt.AlignCenter, "P")
 
 
 # ──────────────────────────────────────────────────────────
 # SMALL HELPER WIDGETS
 # ──────────────────────────────────────────────────────────
+class _AnimatedLogoWidget(QWidget):
+    """3D glossy animated logo for the login right panel — rotating ring + shimmer."""
+    clicked = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._angle = 0
+        self._pulse = 0.0
+        self._pulse_dir = 1
+        self._hover = False
+        self.setFixedSize(80, 80)
+        self.setCursor(Qt.PointingHandCursor)
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._tick)
+        self._timer.start(30)
+
+    def _tick(self):
+        self._angle = (self._angle + 4) % 360
+        self._pulse += 0.05 * self._pulse_dir
+        if self._pulse >= 1.0:
+            self._pulse = 1.0; self._pulse_dir = -1
+        elif self._pulse <= 0.0:
+            self._pulse = 0.0; self._pulse_dir = 1
+        self.update()
+
+    def enterEvent(self, e):
+        self._hover = True; self.update()
+
+    def leaveEvent(self, e):
+        self._hover = False; self.update()
+
+    def mousePressEvent(self, e):
+        self.clicked.emit()
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        s = min(self.width(), self.height())
+        cx, cy = s / 2, s / 2
+        r = s / 2 - 4
+
+        # ── Outer rainbow spinning ring ──
+        ring_grad = QConicalGradient(cx, cy, self._angle)
+        if self._hover:
+            ring_grad.setColorAt(0.00, QColor("#FF6FD8"))
+            ring_grad.setColorAt(0.25, QColor("#6366F1"))
+            ring_grad.setColorAt(0.50, QColor("#06B6D4"))
+            ring_grad.setColorAt(0.75, QColor("#10B981"))
+            ring_grad.setColorAt(1.00, QColor("#FF6FD8"))
+        else:
+            ring_grad.setColorAt(0.00, QColor("#4361EE"))
+            ring_grad.setColorAt(0.40, QColor("#8B5CF6"))
+            ring_grad.setColorAt(0.70, QColor("#06B6D4"))
+            ring_grad.setColorAt(1.00, QColor("#4361EE"))
+        p.setPen(QPen(ring_grad, 4))
+        p.setBrush(Qt.NoBrush)
+        p.drawEllipse(QRectF(2, 2, s - 4, s - 4))
+
+        # ── Sphere body ──
+        sphere = QRadialGradient(cx - r * 0.3, cy - r * 0.35, r * 1.1)
+        if self._hover:
+            sphere.setColorAt(0.0, QColor(lerp_color("#A78BFA", "#FFFFFF", 0.3)))
+            sphere.setColorAt(0.4, QColor("#7C3AED"))
+            sphere.setColorAt(1.0, QColor("#1E1B4B"))
+        else:
+            sphere.setColorAt(0.0, QColor(lerp_color("#4361EE", "#FFFFFF", 0.4)))
+            sphere.setColorAt(0.4, QColor(lerp_color("#4361EE", "#000033", 0.3)))
+            sphere.setColorAt(1.0, QColor("#0A0A2A"))
+        p.setPen(Qt.NoPen)
+        p.setBrush(sphere)
+        p.drawEllipse(QRectF(6, 6, s - 12, s - 12))
+
+        # ── Glass specular highlight ──
+        gloss = QRadialGradient(cx - r * 0.28, cy - r * 0.38, r * 0.52)
+        gloss_a = int(190 + self._pulse * 55)
+        gloss.setColorAt(0.0, QColor(255, 255, 255, gloss_a))
+        gloss.setColorAt(0.6, QColor(255, 255, 255, 55))
+        gloss.setColorAt(1.0, QColor(255, 255, 255, 0))
+        p.setBrush(gloss)
+        p.drawEllipse(QRectF(10, 10, (s - 20) * 0.68, (s - 20) * 0.50))
+
+        # ── Inner rim light ──
+        rim = QRadialGradient(cx + r * 0.48, cy + r * 0.48, r * 0.38)
+        rim.setColorAt(0.0, QColor(100, 150, 255, 90))
+        rim.setColorAt(1.0, QColor(100, 150, 255, 0))
+        p.setBrush(rim)
+        p.drawEllipse(QRectF(s * 0.48, s * 0.48, s * 0.50, s * 0.50))
+
+        # ── P letter — clean bold font ──
+        p.setPen(QColor("#FFFFFF"))
+        p.setFont(QFont("Segoe UI", int(s * 0.32), QFont.Bold))
+        p.drawText(QRectF(0, 0, s, s), Qt.AlignCenter, "P")
+        p.end()
+
+    def stop(self):
+        self._timer.stop()
+
+
 class _GradientBar(QWidget):
     def __init__(self, c1, c2, parent=None):
         super().__init__(parent)

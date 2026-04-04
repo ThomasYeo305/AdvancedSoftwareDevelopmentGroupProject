@@ -9,11 +9,12 @@ from PySide6.QtWidgets import (
     QFrame, QTableView, QHeaderView, QSizePolicy, QProgressBar,
     QGraphicsDropShadowEffect,
 )
-from PySide6.QtCore import Qt, QSortFilterProxyModel, Signal
+from PySide6.QtCore import Qt, QSortFilterProxyModel, Signal, QRectF, QPointF, QTimer
 from PySide6.QtGui import (
     QFont, QColor, QStandardItemModel, QStandardItem, QPainter,
-    QLinearGradient, QPen,
+    QLinearGradient, QPen, QPainterPath, QRadialGradient, QConicalGradient,
 )
+import math
 
 from .theme import PALETTE as P, FONTS as F, DIMS as D, lerp_color
 
@@ -33,6 +34,256 @@ def qfont(spec: tuple) -> QFont:
 def _blend(c1: str, c2: str, t: float) -> str:
     """Alias for lerp_color. t=0→c1, t=1→c2."""
     return lerp_color(c1, c2, t)
+
+
+# ──────────────────────────────────────────────────────────
+# VECTOR ICON PAINTER
+# ──────────────────────────────────────────────────────────
+def draw_key_icon(p: QPainter, key: str, cx: float, cy: float,
+                  size: float, color: QColor):
+    """
+    Draw a beautiful custom vector icon centered at (cx, cy) with scale `size`.
+    Keys: dashboard, tenants, apartments, payments, maintenance,
+          complaints, reports, users  — and stat codes: AP, TN, MT, OD, RC.
+    """
+    p.save()
+    p.setRenderHint(QPainter.Antialiasing)
+    s = size
+    pw = max(1.2, s * 0.11)
+    pen = QPen(color, pw, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+    fill = QColor(color)
+    fill.setAlpha(65)
+
+    # Normalise key
+    _map = {
+        "ap": "apartments", "tn": "tenants", "mt": "maintenance",
+        "od": "overdue",    "rc": "collected", "db": "dashboard",
+        "pm": "payments",   "cp": "complaints", "rp": "reports",
+        "us": "users",
+    }
+    k = _map.get(key.lower(), key.lower())
+
+    if k == "dashboard":
+        gap = s * 0.14
+        hw = (s * 0.90 - gap) / 2
+        for row in range(2):
+            for col in range(2):
+                tx = cx - s * 0.45 + col * (hw + gap)
+                ty = cy - s * 0.45 + row * (hw + gap)
+                p.setPen(Qt.NoPen); p.setBrush(fill)
+                p.drawRoundedRect(QRectF(tx, ty, hw, hw), 3, 3)
+                p.setPen(pen); p.setBrush(Qt.NoBrush)
+                p.drawRoundedRect(QRectF(tx, ty, hw, hw), 3, 3)
+
+    elif k == "tenants":
+        hr = s * 0.26
+        p.setPen(pen); p.setBrush(Qt.NoBrush)
+        p.drawEllipse(QRectF(cx - hr, cy - s * 0.46, hr * 2, hr * 2))
+        bp = QPainterPath()
+        bp.moveTo(cx - s * 0.46, cy + s * 0.46)
+        bp.cubicTo(cx - s*0.46, cy + s*0.04, cx - s*0.26, cy - s*0.02, cx, cy - s*0.02)
+        bp.cubicTo(cx + s*0.26, cy - s*0.02, cx + s*0.46, cy + s*0.04, cx + s*0.46, cy + s*0.46)
+        p.drawPath(bp)
+
+    elif k == "apartments":
+        bx, by = cx - s * 0.30, cy - s * 0.46
+        bw, bh = s * 0.60, s * 0.92
+        p.setPen(Qt.NoPen); p.setBrush(fill)
+        p.drawRoundedRect(QRectF(bx, by, bw, bh), 2, 2)
+        p.setPen(pen); p.setBrush(Qt.NoBrush)
+        p.drawRoundedRect(QRectF(bx, by, bw, bh), 2, 2)
+        p.setPen(QPen(color, pw * 1.4, Qt.SolidLine, Qt.FlatCap))
+        p.drawLine(QPointF(bx, by + 2), QPointF(bx + bw, by + 2))
+        ww, wh = s * 0.13, s * 0.12
+        for row in range(3):
+            for col in range(2):
+                wx = bx + s * 0.08 + col * (ww + s * 0.11)
+                wy = by + s * 0.10 + row * (wh + s * 0.09)
+                if wy + wh < by + bh - s * 0.24:
+                    p.setPen(Qt.NoPen)
+                    wc = QColor(color); wc.setAlpha(130)
+                    p.setBrush(wc)
+                    p.drawRoundedRect(QRectF(wx, wy, ww, wh), 1.5, 1.5)
+        p.setPen(pen); p.setBrush(Qt.NoBrush)
+        p.drawRoundedRect(QRectF(cx - s*0.10, by + bh - s*0.26, s*0.20, s*0.26), 2, 0)
+
+    elif k == "payments":
+        card = QRectF(cx - s*0.44, cy - s*0.28, s*0.88, s*0.56)
+        p.setPen(Qt.NoPen); p.setBrush(fill)
+        p.drawRoundedRect(card, 5, 5)
+        p.setPen(pen); p.setBrush(Qt.NoBrush)
+        p.drawRoundedRect(card, 5, 5)
+        sc2 = QColor(color); sc2.setAlpha(150)
+        p.setPen(Qt.NoPen); p.setBrush(sc2)
+        p.drawRect(QRectF(cx - s*0.44, cy - s*0.14, s*0.88, s*0.12))
+        chip = QColor(color); chip.setAlpha(185)
+        p.setBrush(chip)
+        p.drawRoundedRect(QRectF(cx - s*0.36, cy + s*0.05, s*0.23, s*0.16), 2, 2)
+        p.setPen(pen); p.setBrush(Qt.NoBrush)
+
+    elif k == "maintenance":
+        p.setPen(QPen(color, s * 0.20, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        p.drawLine(QPointF(cx - s*0.38, cy + s*0.42), QPointF(cx + s*0.06, cy - s*0.10))
+        hr = s * 0.24
+        hcx, hcy = cx + s*0.20, cy - s*0.22
+        p.setPen(pen); p.setBrush(fill)
+        p.drawEllipse(QRectF(hcx - hr, hcy - hr, hr * 2, hr * 2))
+        p.setPen(QPen(color, pw * 0.9, Qt.SolidLine, Qt.RoundCap))
+        p.drawLine(QPointF(hcx, hcy - hr*0.6), QPointF(hcx, hcy + hr*0.6))
+        p.drawLine(QPointF(hcx - hr*0.6, hcy), QPointF(hcx + hr*0.6, hcy))
+
+    elif k == "complaints":
+        bub = QRectF(cx - s*0.44, cy - s*0.42, s*0.88, s*0.64)
+        p.setPen(Qt.NoPen); p.setBrush(fill)
+        p.drawRoundedRect(bub, 10, 10)
+        p.setPen(pen); p.setBrush(Qt.NoBrush)
+        p.drawRoundedRect(bub, 10, 10)
+        tail = QPainterPath()
+        tail.moveTo(cx - s*0.08, cy + s*0.22)
+        tail.lineTo(cx - s*0.28, cy + s*0.46)
+        tail.lineTo(cx + s*0.06, cy + s*0.22)
+        p.setPen(pen); p.drawPath(tail)
+        for i in range(3):
+            p.setPen(Qt.NoPen); p.setBrush(color)
+            p.drawEllipse(QRectF(cx - s*0.16 + i*s*0.18, cy - s*0.13, s*0.10, s*0.10))
+
+    elif k == "reports":
+        bars = [(cx - s*0.36, 0.62), (cx - s*0.10, 0.38), (cx + s*0.16, 0.76)]
+        bw = s * 0.22
+        base_y = cy + s * 0.40
+        for bx_i, bh_f in bars:
+            bh_px = bh_f * s * 0.86
+            bc = QColor(color); bc.setAlpha(160)
+            p.setPen(Qt.NoPen); p.setBrush(bc)
+            p.drawRoundedRect(QRectF(bx_i, base_y - bh_px, bw, bh_px), 2.5, 2.5)
+        p.setPen(pen); p.setBrush(Qt.NoBrush)
+        p.drawLine(QPointF(cx - s*0.46, base_y), QPointF(cx + s*0.46, base_y))
+        dots = [
+            (cx - s*0.25, base_y - 0.62*s*0.86),
+            (cx + s*0.01, base_y - 0.38*s*0.86),
+            (cx + s*0.27, base_y - 0.76*s*0.86),
+        ]
+        p.setPen(QPen(color, pw * 0.85, Qt.SolidLine, Qt.RoundCap))
+        for i in range(len(dots) - 1):
+            p.drawLine(QPointF(*dots[i]), QPointF(*dots[i + 1]))
+        p.setPen(Qt.NoPen)
+        for pt in dots:
+            p.setBrush(color)
+            p.drawEllipse(QRectF(pt[0] - s*0.055, pt[1] - s*0.055, s*0.11, s*0.11))
+
+    elif k == "users":
+        hr1 = s * 0.19
+        p.setPen(pen); p.setBrush(Qt.NoBrush)
+        p.drawEllipse(QRectF(cx + s*0.06 - hr1, cy - s*0.40, hr1*2, hr1*2))
+        bp1 = QPainterPath()
+        bp1.moveTo(cx - s*0.06, cy + s*0.44)
+        bp1.cubicTo(cx - s*0.06, cy + s*0.08, cx + s*0.06, cy + s*0.02, cx + s*0.24, cy + s*0.02)
+        bp1.cubicTo(cx + s*0.42, cy + s*0.02, cx + s*0.50, cy + s*0.10, cx + s*0.50, cy + s*0.44)
+        p.drawPath(bp1)
+        hr2 = s * 0.21
+        p.drawEllipse(QRectF(cx - s*0.22 - hr2, cy - s*0.42, hr2*2, hr2*2))
+        bp2 = QPainterPath()
+        bp2.moveTo(cx - s*0.50, cy + s*0.44)
+        bp2.cubicTo(cx - s*0.50, cy + s*0.06, cx - s*0.32, cy + s*0.01, cx - s*0.18, cy + s*0.01)
+        bp2.cubicTo(cx - s*0.04, cy + s*0.01, cx + s*0.02, cy + s*0.06, cx + s*0.02, cy + s*0.44)
+        p.drawPath(bp2)
+
+    elif k == "overdue":
+        pts = [
+            QPointF(cx + s*0.44*math.cos(math.radians(-90 + i*120)),
+                    cy + s*0.44*math.sin(math.radians(-90 + i*120)))
+            for i in range(3)
+        ]
+        tri = QPainterPath()
+        tri.moveTo(pts[0]); tri.lineTo(pts[1]); tri.lineTo(pts[2]); tri.closeSubpath()
+        p.setPen(Qt.NoPen); p.setBrush(fill); p.drawPath(tri)
+        p.setPen(pen); p.setBrush(Qt.NoBrush); p.drawPath(tri)
+        p.setPen(QPen(color, pw * 1.4, Qt.SolidLine, Qt.RoundCap))
+        p.drawLine(QPointF(cx, cy - s*0.24), QPointF(cx, cy + s*0.06))
+        p.setPen(Qt.NoPen); p.setBrush(color)
+        p.drawEllipse(QRectF(cx - s*0.07, cy + s*0.14, s*0.14, s*0.14))
+
+    elif k == "collected":
+        cr = s * 0.42
+        p.setPen(Qt.NoPen); p.setBrush(fill)
+        p.drawEllipse(QRectF(cx - cr, cy - cr, cr*2, cr*2))
+        p.setPen(pen); p.setBrush(Qt.NoBrush)
+        p.drawEllipse(QRectF(cx - cr, cy - cr, cr*2, cr*2))
+        ck = QPainterPath()
+        ck.moveTo(cx - s*0.24, cy + s*0.03)
+        ck.lineTo(cx - s*0.06, cy + s*0.23)
+        ck.lineTo(cx + s*0.26, cy - s*0.18)
+        p.setPen(QPen(color, pw * 1.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        p.drawPath(ck)
+
+    p.restore()
+
+
+# ──────────────────────────────────────────────────────────
+# STAT ICON BADGE  (animated glossy sphere + vector icon)
+# ──────────────────────────────────────────────────────────
+class _StatIconBadge(QWidget):
+    """Glossy animated circular badge with custom vector icon — replaces text labels."""
+
+    def __init__(self, icon_key: str, color: str, parent=None):
+        super().__init__(parent)
+        self._key   = icon_key
+        self._color = color
+        self._pulse = 0.0
+        self._pulse_dir = 1
+        self.setFixedSize(58, 58)
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._tick)
+        self._timer.start(50)
+
+    def _tick(self):
+        self._pulse += 0.04 * self._pulse_dir
+        if self._pulse >= 1.0:
+            self._pulse = 1.0; self._pulse_dir = -1
+        elif self._pulse <= 0.0:
+            self._pulse = 0.0; self._pulse_dir = 1
+        self.update()
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        sw = min(self.width(), self.height())
+        cx, cy = sw / 2, sw / 2
+        r = sw / 2 - 3
+        col = QColor(self._color)
+
+        # Pulsing outer glow ring
+        glow_a = int(30 + self._pulse * 45)
+        glow_c = QColor(col); glow_c.setAlpha(glow_a)
+        p.setPen(QPen(glow_c, 4))
+        p.setBrush(Qt.NoBrush)
+        p.drawEllipse(QRectF(1, 1, sw - 2, sw - 2))
+
+        # Inner thin ring
+        ring_c = QColor(col); ring_c.setAlpha(90)
+        p.setPen(QPen(ring_c, 1.5))
+        p.drawEllipse(QRectF(3, 3, sw - 6, sw - 6))
+
+        # Glossy sphere background
+        sphere = QRadialGradient(cx - r*0.28, cy - r*0.32, r * 1.12)
+        sphere.setColorAt(0.0, QColor(lerp_color(self._color, "#FFFFFF", 0.42)))
+        sphere.setColorAt(0.40, QColor(lerp_color(self._color, P.bg_card, 0.72)))
+        sphere.setColorAt(1.0, QColor(lerp_color(self._color, P.bg_card, 0.90)))
+        p.setPen(Qt.NoPen); p.setBrush(sphere)
+        p.drawEllipse(QRectF(5, 5, sw - 10, sw - 10))
+
+        # Glass highlight
+        gloss = QRadialGradient(cx - r*0.25, cy - r*0.33, r * 0.48)
+        ga = int(145 + self._pulse * 55)
+        gloss.setColorAt(0.0, QColor(255, 255, 255, ga))
+        gloss.setColorAt(0.6, QColor(255, 255, 255, 40))
+        gloss.setColorAt(1.0, QColor(255, 255, 255, 0))
+        p.setBrush(gloss)
+        p.drawEllipse(QRectF(8, 8, (sw - 16) * 0.68, (sw - 16) * 0.50))
+
+        # Vector icon
+        draw_key_icon(p, self._key, cx, cy, r * 0.50, col)
+        p.end()
 
 
 # ── Dynamic per-class button style (reads current PALETTE each time) ──
@@ -242,15 +493,8 @@ class StatCard(QFrame):
         left.addWidget(cap)
         layout.addLayout(left, 1)
 
-        # Right: icon badge — larger and more prominent
-        badge = QLabel(icon)
-        badge.setAlignment(Qt.AlignCenter)
-        badge.setFixedSize(56, 56)
-        badge.setFont(QFont("Segoe UI", 19))
-        tint = _blend(color, P.bg_card, 0.82)
-        badge.setStyleSheet(
-            f"background-color: {tint}; color: {color}; "
-            f"border-radius: 28px; border: 2px solid {_blend(color, P.bg_card, 0.55)};")
+        # Right: animated glossy icon badge
+        badge = _StatIconBadge(icon, color)
         layout.addWidget(badge)
 
         # Drop shadow — deeper
