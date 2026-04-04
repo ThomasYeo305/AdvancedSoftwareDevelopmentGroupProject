@@ -19,7 +19,7 @@ from ..widgets import (
     table_insert, table_selected_id, badge_text, styled_button,
     GradientProgressBar, Toast, STATUS_COLORS,
 )
-from .. import database2 as db
+from .. import database as db
 
 
 class PaymentView(QWidget):

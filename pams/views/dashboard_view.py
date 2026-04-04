@@ -22,7 +22,7 @@ from ..widgets import (
     styled_button, _blend, Toast,
     STATUS_COLORS, PRIORITY_COLORS,
 )
-from .. import database2 as db
+from .. import database as db
 
 
 class DashboardView(QWidget):

@@ -34,7 +34,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtGui import QFont, QFontDatabase
 
-from pams import database2 as db
+from pams import database as db
 from pams.theme import PALETTE as P, get_global_qss, cycle_theme
 
 

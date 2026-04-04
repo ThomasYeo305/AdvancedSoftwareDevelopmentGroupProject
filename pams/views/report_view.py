@@ -17,7 +17,7 @@ from ..widgets import (
     table_insert, badge_text, StatusRing, GradientProgressBar, styled_button,
     STATUS_COLORS,
 )
-from .. import database2 as db
+from .. import database as db
 
 CITY_COLORS = {
     "Bristol":    P.accent,

@@ -1,7 +1,8 @@
 # ============================================================
 # PAMS — database.py
 # Paragon Apartment Management System
-# SQLite Database Layer
+# Comprehensive SQLite Database Layer
+#
 # Replaces the in-memory data store with full SQLite persistence.
 # Implements the DatabaseManager Singleton pattern as per the
 # Class Diagram and all Sequence Diagram workflows (SD1–SD5).
