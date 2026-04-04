@@ -4,13 +4,30 @@
 # Paragon Apartment Management System — Entry Point (PySide6)
 #
 # Run:  python main.py
-# Requires: Python 3.10+, PySide6
+# Requires: Python 3.10-3.13, PySide6
 # ============================================================
 from __future__ import annotations
 import sys, os
+import importlib.util
+
+if sys.version_info >= (3, 14):
+    print(
+        "PAMS startup blocked: Python 3.14 is not supported for this UI build.\n"
+        "Use Python 3.10-3.13 and recreate the virtual environment."
+    )
+    raise SystemExit(1)
 
 # ── Make sure the project root is on sys.path ──
 sys.path.insert(0, os.path.dirname(__file__))
+
+
+def _configure_qt_plugin_paths() -> None:
+    """Remove plugin-path overrides so Qt uses PySide6 defaults."""
+    for env_key in ("QT_PLUGIN_PATH", "QT_QPA_PLATFORM_PLUGIN_PATH"):
+        os.environ.pop(env_key, None)
+
+
+_configure_qt_plugin_paths()
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget
 from PySide6.QtCore import Qt

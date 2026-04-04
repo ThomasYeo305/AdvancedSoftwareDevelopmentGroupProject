@@ -174,7 +174,7 @@ class UserView(QWidget):
                 u["role"],
                 u["location"],
                 u.get("email") or "—",
-                "✔" if u["active"] else "✗",
+                "YES" if u["active"] else "NO",
                 (u.get("created_at") or "")[:10],
             ], color)
             cnt += 1

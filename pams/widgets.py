@@ -547,8 +547,8 @@ class Toast(QWidget):
         colors = {"success": P.success, "error": P.danger,
                   "info": P.info, "warning": P.warning}
         color = colors.get(kind, P.success)
-        icons = {"success": "✓", "error": "✗", "info": "ℹ", "warning": "⚠"}
-        icon = icons.get(kind, "✓")
+        icons = {"success": "OK", "error": "ER", "info": "IN", "warning": "WR"}
+        icon = icons.get(kind, "OK")
 
         self.setStyleSheet(f"""
             QWidget#toastBody {{

@@ -161,7 +161,7 @@ class Sidebar(QWidget):
 
         # ── Location badge ──
         if self._user.get("location"):
-            loc = QLabel(f"  📍 {self._user['location']}")
+            loc = QLabel(f"  Location: {self._user['location']}")
             loc.setFont(QFont("Segoe UI", 10))
             loc.setStyleSheet(
                 f"color: {self._nav_text}; background: transparent; padding: 4px {D.pad_md}px;")
@@ -201,10 +201,10 @@ class Sidebar(QWidget):
         pl.addWidget(info, 1)
 
         # Logout button — pill shaped
-        logout = QPushButton("⏻")
+        logout = QPushButton("LOGOUT")
         logout.setFont(QFont("Segoe UI", 13))
         logout.setCursor(Qt.PointingHandCursor)
-        logout.setFixedSize(36, 36)
+        logout.setFixedSize(88, 36)
         logout_bg = lerp_color(self._bg, "#FFFFFF", 0.06 if self._glow else 0.12)
         logout.setStyleSheet(f"""
             QPushButton {{

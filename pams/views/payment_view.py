@@ -69,7 +69,7 @@ class PaymentView(QWidget):
         btn_paid.clicked.connect(self._mark_paid)
         toolbar.addWidget(btn_paid)
 
-        btn_late = styled_button("⚠ Late Notices", "danger")
+        btn_late = styled_button("Late Notices", "danger")
         btn_late.clicked.connect(self._late_notices)
         toolbar.addWidget(btn_late)
 

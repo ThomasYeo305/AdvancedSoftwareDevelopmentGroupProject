@@ -235,7 +235,7 @@ class LoginView(QWidget):
         fl.addWidget(self._err_lbl)
 
         # Sign in button — gradient style
-        self._login_btn = QPushButton("SIGN  IN   ›")
+        self._login_btn = QPushButton("SIGN IN")
         self._login_btn.setFont(QFont("Segoe UI", 14, QFont.Bold))
         self._login_btn.setCursor(Qt.PointingHandCursor)
         self._login_btn.setFixedHeight(50)
@@ -365,10 +365,10 @@ class LoginView(QWidget):
     def _do_auth(self, username: str, password: str):
         user = db.login(username, password)
         if user:
-            self._login_btn.setText("✓  Success!")
+            self._login_btn.setText("SUCCESS")
             QTimer.singleShot(300, lambda: self._on_login(user))
         else:
-            self._login_btn.setText("SIGN  IN   ›")
+            self._login_btn.setText("SIGN IN")
             self._login_btn.setEnabled(True)
             self._err_lbl.setText("Invalid username or password.")
             self._pw_entry.clear()

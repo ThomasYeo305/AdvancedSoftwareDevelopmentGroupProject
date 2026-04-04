@@ -233,9 +233,9 @@ class ReportView(QWidget):
         strip = QHBoxLayout()
         strip.setSpacing(D.pad_sm)
         for icon, title, val, color in [
-            ("💰", "All-City Collected", f"£{col_all:,.0f}", P.success),
-            ("⚠️", "All-City Overdue",   f"£{pen_all:,.0f}", P.danger),
-            ("📈", "Collection Rate",    f"{int(col_all/total*100)}%", P.accent),
+            ("RC", "All-City Collected", f"£{col_all:,.0f}", P.success),
+            ("OD", "All-City Overdue",   f"£{pen_all:,.0f}", P.danger),
+            ("CR", "Collection Rate",    f"{int(col_all/total*100)}%", P.accent),
         ]:
             sc = StatCard(icon=icon, value=val, label=title, color=color)
             strip.addWidget(sc)
@@ -292,13 +292,13 @@ class ReportView(QWidget):
 
         strip = QHBoxLayout()
         strip.setSpacing(D.pad_sm)
-        status_icons = {"Open": "⭕", "In Progress": "⏳", "Resolved": "✅"}
+        status_icons = {"Open": "OP", "In Progress": "IP", "Resolved": "RS"}
         for row in summary:
             status = row.get("status", "—")
             cost = row.get("total_cost") or 0
             count = row.get("count") or 0
             color = color_map.get(status, P.accent)
-            sc = StatCard(icon=status_icons.get(status, "🛠️"),
+            sc = StatCard(icon=status_icons.get(status, "MT"),
                           value=f"£{cost:,.0f}",
                           label=f"{status} — {count} request(s)",
                           color=color)

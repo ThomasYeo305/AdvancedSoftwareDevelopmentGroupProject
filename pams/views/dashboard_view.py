@@ -68,11 +68,11 @@ class DashboardView(QWidget):
         tot = s["total_apts"] or 1
 
         kpis = [
-            ("🏢", f"{occ}/{tot}", "Apartments Occupied", P.accent),
-            ("👥", str(s["total_tenants"]),  "Active Tenants",      P.success),
-            ("🛠️", str(s["active_maint"]),   "Open Maintenance",    P.warning),
-            ("⚠️", f"£{s['pending_rent']:,.0f}", "Overdue Rent",    P.danger),
-            ("💰", f"£{s['collected_rent']:,.0f}", "Rent Collected", P.info),
+            ("AP", f"{occ}/{tot}", "Apartments Occupied", P.accent),
+            ("TN", str(s["total_tenants"]),  "Active Tenants",      P.success),
+            ("MT", str(s["active_maint"]),   "Open Maintenance",    P.warning),
+            ("OD", f"£{s['pending_rent']:,.0f}", "Overdue Rent",    P.danger),
+            ("RC", f"£{s['collected_rent']:,.0f}", "Rent Collected", P.info),
         ]
         row = QWidget()
         rl = QHBoxLayout(row)
@@ -88,7 +88,7 @@ class DashboardView(QWidget):
     # ──────────────────────────────────────────────────────
     def _build_admin(self, lay):
         section_header(lay, "Administrator Dashboard",
-                       f"Location: {self._loc}  •  {datetime.date.today():%d %b %Y}",
+                       f"Location: {self._loc} | {datetime.date.today():%d %b %Y}",
                        accent=ROLE_COLORS["Administrator"])
         self._welcome_banner(lay, ROLE_COLORS["Administrator"])
         self._kpi_row(lay)
@@ -423,7 +423,7 @@ class DashboardView(QWidget):
 
         if not all([ni, name, phone]):
             self._qf_result.setStyleSheet(f"color: {P.danger};")
-            self._qf_result.setText("⚠  NI Number, Name & Phone are required.")
+            self._qf_result.setText("ERROR: NI Number, Name and Phone are required.")
             return
 
         try:
@@ -431,14 +431,14 @@ class DashboardView(QWidget):
             monthly_rent = float(self._qf_entries["Monthly Rent (£)"].text() or "0")
         except ValueError:
             self._qf_result.setStyleSheet(f"color: {P.danger};")
-            self._qf_result.setText("⚠  Deposit and Rent must be numbers.")
+            self._qf_result.setText("ERROR: Deposit and Rent must be numbers.")
             return
 
         try:
             months = int(lease_str or "12")
         except ValueError:
             self._qf_result.setStyleSheet(f"color: {P.danger};")
-            self._qf_result.setText("⚠  Lease must be a number.")
+            self._qf_result.setText("ERROR: Lease must be a number.")
             return
 
         today = datetime.date.today()
@@ -456,12 +456,12 @@ class DashboardView(QWidget):
                           apt_req, apt_id, today.isoformat(), end,
                           deposit, monthly_rent)
             self._qf_result.setStyleSheet(f"color: {P.success};")
-            self._qf_result.setText(f"✔  Tenant '{name}' registered successfully!")
+            self._qf_result.setText(f"SUCCESS: Tenant '{name}' registered successfully.")
             for e in self._qf_entries.values():
                 e.clear()
         except Exception as ex:
             self._qf_result.setStyleSheet(f"color: {P.danger};")
-            self._qf_result.setText(f"⚠  {ex}")
+            self._qf_result.setText(f"ERROR: {ex}")
 
     def _recent_payments_widget(self) -> Card:
         card = Card(title="Recent Payments", accent_color=P.warning)

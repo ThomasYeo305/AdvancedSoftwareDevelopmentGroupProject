@@ -542,5 +542,5 @@ class _ScheduleDialog(QDialog):
             return
         notes = self._notes.text().strip()
         db.update_maintenance_schedule(self._mid, sd, notes)
-        Toast(self.window(), "Scheduled & tenant notified ✓", kind="success")
+        Toast(self.window(), "Scheduled and tenant notified", kind="success")
         self.accept()
