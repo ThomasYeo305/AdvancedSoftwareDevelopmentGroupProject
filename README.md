@@ -40,7 +40,6 @@
   - [Default Login Credentials](#default-login-credentials)
   - [Non-Functional Requirements](#non-functional-requirements)
   - [Methodology](#methodology)
-  - [Team Contributions](#team-contributions)
 
 ---
 
@@ -267,17 +266,3 @@ The database is pre-seeded with the following demo accounts for testing each rol
 ## Methodology
 
 Agile development approach with iterative sprints. Each sprint focused on delivering one functional module end-to-end before moving to the next. Regular Git commits were used throughout to track progress and individual contributions across the team.
-
----
-
-## Team Contributions
-
-Evidence of individual contributions is maintained through Git commit history. Each team member's commits reflect their ownership of specific modules and features throughout the development sprints.
-
-To view the full contribution history:
-
-```bash
-git log --oneline --all
-```
-
-Or visit the [GitHub repository](https://github.com/ThomasYeo305/AdvancedSoftwareDevelopmentGroupProject/commits/main).
