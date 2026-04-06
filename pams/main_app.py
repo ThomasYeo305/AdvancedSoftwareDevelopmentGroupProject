@@ -810,7 +810,7 @@ class _LogoCircle(QWidget):
 
         # ── P letter — clean bold font ──
         p.setPen(QColor("#FFFFFF"))   # white colour for the 'P' letter so it stands out on any sphere colour
-        p.setFont(QFont("Segoe UI", int(s * 0.32), QFont.Bold))   # font size is 32% of the widget size so it scales with the logo
+        p.setFont(QFont("Segoe UI", max(1, int(s * 0.32)), QFont.Bold))   # font size is 32% of the widget size (minimum 1pt) so it scales with the logo without going to 0
         p.drawText(QRectF(0, 0, s, s), Qt.AlignCenter, "P")   # draws the 'P' letter perfectly centred in the logo circle
         p.end()
 

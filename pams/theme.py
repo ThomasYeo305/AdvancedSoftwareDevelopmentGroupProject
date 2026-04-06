@@ -330,8 +330,18 @@ QComboBox::down-arrow {{
 QComboBox QAbstractItemView {{
     background-color: {_P.bg_card}; border: 1px solid {_P.border};              /* styles the dropdown popup menu with a white card background and thin border */
     border-radius: 10px; padding: 6px;                                            /* rounds the popup's corners by 10px and adds inner padding around the items list */
+    color: {_P.text_primary};                                                     /* explicitly sets item text to the near-black primary colour so items are readable on the white background */
     selection-background-color: {_P.accent_glow}; selection-color: {_P.accent}; /* highlights the hovered/selected dropdown option with a pale indigo background */
     font-size: 12px; outline: 0;                                                  /* sets item text to 12pt and removes the default keyboard-focus dotted outline */
+}}
+QComboBox QAbstractItemView::item {{
+    color: {_P.text_primary}; padding: 8px 12px; min-height: 28px;              /* ensures every individual dropdown row has readable dark text with generous padding */
+}}
+QComboBox QAbstractItemView::item:hover {{
+    background-color: {_P.accent_glow}; color: {_P.accent};                     /* tints a hovered item with pale indigo and switches the text to accent colour */
+}}
+QComboBox QAbstractItemView::item:selected {{
+    background-color: {_P.accent_glow}; color: {_P.accent};                     /* matches the selected item style to the hover style for consistency */
 }}
 
 /* ── QPushButton — Primary ── */
@@ -452,6 +462,23 @@ QMessageBox QPushButton {{
     border-radius: 10px; padding: 10px 28px; font-weight: bold; min-width: 90px;  /* rounds their corners, adds padding, makes text bold, and ensures a minimum width */
 }}
 QMessageBox QPushButton:hover {{ background-color: {_P.accent_dim}; }}         /* darkens message box button on hover */
+
+/* ── QInputDialog ── */
+QInputDialog {{ background-color: {_P.bg_card}; }}                             /* gives input dialogs (e.g. Add City) a white card background */
+QInputDialog QLabel {{ color: {_P.text_primary}; font-size: 12px; }}           /* styles the prompt label text in the primary near-black colour */
+QInputDialog QLineEdit {{
+    background-color: {_P.bg_input}; border: 1.5px solid {_P.border};         /* gives the text input inside an input dialog the same pale background as regular inputs */
+    border-radius: 8px; padding: 8px 12px;
+    font-size: 12px; color: {_P.text_primary};
+}}
+QInputDialog QPushButton {{
+    background-color: {_P.accent}; color: #FFFFFF; border: none;               /* styles OK/Cancel buttons in input dialogs as solid indigo with white text */
+    border-radius: 10px; padding: 10px 28px; font-weight: bold; min-width: 90px;
+}}
+QInputDialog QPushButton:hover {{ background-color: {_P.accent_dim}; }}        /* darkens on hover to match the message box button hover behaviour */
+
+/* ── Generic QPushButton fallback (dialogs without cssClass) ── */
+QPushButton:!property(cssClass) {{ color: {_P.text_primary}; }}
 
 /* ── Card Frame ── */
 QFrame[cssClass="card"] {{

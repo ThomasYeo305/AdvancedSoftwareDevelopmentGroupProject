@@ -135,6 +135,10 @@ if __name__ == "__main__":
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)  # tells Qt to use the exact fractional DPI scale factor rather than rounding it, giving sharper UI on 125%/150% screens
 
     app = QApplication(sys.argv)  # creates the Qt application object; sys.argv passes any command-line arguments (required even if none are used)
+    # Force Qt's cross-platform Fusion renderer so QSS is properly applied to
+    # all widgets including native dialogs (QMessageBox, QInputDialog, etc.).
+    # Without this, Windows native rendering overrides stylesheet colours.
+    app.setStyle("Fusion")   # switches to Qt's own Fusion style engine — makes QSS rules apply consistently on every platform
     # "Segoe UI" is Windows-only; resolve a cross-platform substitute before
     # any widget is created so every QFont("Segoe UI", ...) call silently maps
     # to the correct font automatically (eliminates the 50 ms alias warning).
