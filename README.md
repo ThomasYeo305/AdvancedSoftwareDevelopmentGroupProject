@@ -1,3 +1,5 @@
+<div align="center">
+
 # Paragon Apartment Management System (PAMS)
 
 [![Python](https://img.shields.io/badge/Python-3.10%20%E2%80%93%203.13-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
@@ -9,20 +11,36 @@
 
 > A fully-featured desktop application for managing multi-location apartment operations across Bristol, Cardiff, London, and Manchester — built with Python, PySide6, and SQLite.
 
+</div>
+
 ---
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Project Structure](#project-structure)
-- [Database Schema](#database-schema)
-- [Roles & Access Control](#roles--access-control)
-- [Getting Started](#getting-started)
-- [Default Login Credentials](#default-login-credentials)
-- [Assignment Context](#assignment-context)
-- [Team Contributions](#team-contributions)
+- [Paragon Apartment Management System (PAMS)](#paragon-apartment-management-system-pams)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Features](#features)
+    - [Account \& User Management](#account--user-management)
+    - [Tenant Management](#tenant-management)
+    - [Apartment Management](#apartment-management)
+    - [Payment \& Billing](#payment--billing)
+    - [Maintenance](#maintenance)
+    - [Complaints](#complaints)
+    - [Reporting](#reporting)
+    - [Dashboard](#dashboard)
+    - [Manager-Only](#manager-only)
+    - [Non-Functional](#non-functional)
+  - [Project Structure](#project-structure)
+  - [Database Schema](#database-schema)
+  - [Roles \& Access Control](#roles--access-control)
+  - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+  - [Default Login Credentials](#default-login-credentials)
+  - [Non-Functional Requirements](#non-functional-requirements)
+  - [Methodology](#methodology)
+  - [Team Contributions](#team-contributions)
 
 ---
 
@@ -236,21 +254,7 @@ The database is pre-seeded with the following demo accounts for testing each rol
 
 ---
 
-## Assignment Context
-
-**Module:** Advanced Software Development — UFCF8S-30-2  
-**Assessment:** Group Portfolio (75%) — Task 1  
-**Institution:** University of the West of England (UWE Bristol)
-
-### Deliverables Addressed
-
-| Element | Requirement | Status |
-|---|---|---|
-| Element 1 — System Design | Use case diagram, class diagram, sequence diagrams (UML) | Included in portfolio |
-| Element 2 — System Development | OOP Python desktop application with SQLite, mock data, UI design, RBAC security | Complete |
-| Element 3 — Testing | Manual and automated test cases, bad data inputs, component and integration testing | Included in portfolio |
-
-### Key Non-Functional Requirements Met
+## Non-Functional Requirements
 
 - **Security:** PBKDF2-HMAC-SHA256 password hashing, role-based access enforcement, audit log
 - **Scalability:** Multi-city architecture, location-scoped queries, Manager-level global view
@@ -258,9 +262,11 @@ The database is pre-seeded with the following demo accounts for testing each rol
 - **Usability:** Professional property-tech UI design, consistent navigation, toast notifications
 - **Reliability:** Foreign key enforcement, soft-delete (no data loss), NI uniqueness validation
 
-### Methodology
+---
 
-Agile development approach — iterative feature delivery across sprints with regular Git commits used as evidence of individual and group contributions. Each sprint focused on one functional module before integration.
+## Methodology
+
+Agile development approach with iterative sprints. Each sprint focused on delivering one functional module end-to-end before moving to the next. Regular Git commits were used throughout to track progress and individual contributions across the team.
 
 ---
 
