@@ -354,6 +354,13 @@ class LoginView(QWidget):
         QTimer.singleShot(400, lambda: self._do_auth(username, password))   # waits 400ms (for UX feel) then runs the actual database credential check
 
     def _do_auth(self, username: str, password: str):
+        # The 400 ms timer may fire after the LoginView has been removed from the
+        # stack and its C++ widgets deleted (e.g. rapid theme switch or double-click).
+        # Guard here so we never access a deleted Qt object.
+        try:
+            self._login_btn.isEnabled()   # cheap property read — raises RuntimeError if the C++ object is already gone
+        except RuntimeError:
+            return   # widget was deleted before the timer fired; nothing to do
         user = db.login(username, password)   # calls the database login function which hashes the password and checks credentials
         if user:
             self._login_btn.setText("SUCCESS")   # briefly shows 'SUCCESS' on the button before transitioning to the dashboard

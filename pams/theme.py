@@ -457,11 +457,6 @@ QDialog {{ background-color: {_P.bg_card}; border-radius: 12px; }}  /* gives all
 /* ── QMessageBox ── */
 QMessageBox {{ background-color: {_P.bg_card}; }}                              /* gives message boxes (alerts/confirms) a white background */
 QMessageBox QLabel {{ color: {_P.text_primary}; font-size: 12px; }}            /* styles message box body text in the primary colour at 12pt */
-QMessageBox QPushButton {{
-    background-color: {_P.accent}; color: #FFFFFF; border: none;               /* styles message box buttons as solid indigo with white text */
-    border-radius: 10px; padding: 10px 28px; font-weight: bold; min-width: 90px;  /* rounds their corners, adds padding, makes text bold, and ensures a minimum width */
-}}
-QMessageBox QPushButton:hover {{ background-color: {_P.accent_dim}; }}         /* darkens message box button on hover */
 
 /* ── QInputDialog ── */
 QInputDialog {{ background-color: {_P.bg_card}; }}                             /* gives input dialogs (e.g. Add City) a white card background */
@@ -471,14 +466,17 @@ QInputDialog QLineEdit {{
     border-radius: 8px; padding: 8px 12px;
     font-size: 12px; color: {_P.text_primary};
 }}
-QInputDialog QPushButton {{
-    background-color: {_P.accent}; color: #FFFFFF; border: none;               /* styles OK/Cancel buttons in input dialogs as solid indigo with white text */
-    border-radius: 10px; padding: 10px 28px; font-weight: bold; min-width: 90px;
-}}
-QInputDialog QPushButton:hover {{ background-color: {_P.accent_dim}; }}        /* darkens on hover to match the message box button hover behaviour */
 
-/* ── Generic QPushButton fallback (dialogs without cssClass) ── */
-QPushButton:!property(cssClass) {{ color: {_P.text_primary}; }}
+/* ── QDialogButtonBox (used inside QMessageBox, QInputDialog, and all QDialogs) ── */
+/* Qt places all standard Yes/No/OK/Cancel buttons inside a QDialogButtonBox, not        */
+/* directly under QMessageBox, so we must target QDialogButtonBox QPushButton here.      */
+QDialogButtonBox QPushButton {{
+    background-color: {_P.accent}; color: #FFFFFF; border: none;               /* gives all standard dialog buttons (Yes, No, OK, Cancel) a solid indigo fill with white text */
+    border-radius: 10px; padding: 10px 28px; font-weight: bold;               /* rounds corners and adds padding to match the app's primary button style */
+    min-width: 90px; min-height: 36px;                                        /* enforces a minimum size so very short labels like 'Ok' are still easy to click */
+}}
+QDialogButtonBox QPushButton:hover {{ background-color: {_P.accent_dim}; }}    /* darkens the button on hover for click feedback */
+QDialogButtonBox QPushButton:pressed {{ background-color: {lerp_color(_P.accent_dim, '#000000', 0.15)}; }}  /* darkens further on press */
 
 /* ── Card Frame ── */
 QFrame[cssClass="card"] {{
