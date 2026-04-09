@@ -17,7 +17,7 @@ from ..theme import PALETTE as P, FONTS as F, DIMS as D
 from ..widgets import (
     qfont, Card, section_header, make_table, table_clear,
     table_insert, table_selected_id, badge_text, styled_button, Toast,
-    PRIORITY_COLORS, fmt_date,   # PRIORITY_COLORS maps High/Medium/Low to red/amber/green
+    PRIORITY_COLORS, STATUS_COLORS, fmt_date,   # PRIORITY_COLORS maps High/Medium/Low to red/amber/green; STATUS_COLORS maps Resolved to green etc.
 )
 from .. import database as db   # all maintenance, tenant and staff SQL queries
 
@@ -104,7 +104,7 @@ class MaintenanceView(QWidget):
         # Table card
         card = Card(title="", accent_color=P.danger)   # red-accented card for the maintenance requests table
         cols = [
-            ("#", 40), ("Issue", 160), ("Tenant", 120), ("Apt", 70),
+            ("#", 55), ("Issue", 160), ("Tenant", 120), ("Apt", 70),
             ("City", 80), ("Priority", 80), ("Status", 100),
             ("Assigned To", 130), ("Reported", 90), ("Scheduled", 90),
             ("Resolved", 90), ("Cost £", 70),   # 12 columns covering all key maintenance fields
@@ -140,7 +140,11 @@ class MaintenanceView(QWidget):
             if pfilt != "All" and m["priority"] != pfilt:
                 continue   # skips requests not matching the current priority filter
             pri = m["priority"]
-            color = PRIORITY_COLORS.get(pri, P.text_muted)   # row text colour based on priority
+            # Resolved items are always green; active items are coloured by priority for urgency
+            if m["status"] == "Resolved":
+                color = STATUS_COLORS.get("Resolved", P.success)
+            else:
+                color = PRIORITY_COLORS.get(pri, P.text_muted)   # row text colour based on priority (red=High urgent, amber=Medium, green=Low)
             table_insert(self._model, [
                 str(m["id"]),
                 m["title"],
