@@ -47,7 +47,7 @@ class MaintenanceView(QWidget):
         # Status filter
         self._filter_val = "All"   # default shows all statuses
         self._filter_group = QButtonGroup(self)   # groups status radios so only one is active
-        for s in ["All", "Open", "In Progress", "Resolved"]:
+        for s in ["All", "Open", "Assigned", "Scheduled", "In Progress", "Resolved"]:
             rb = QRadioButton(s)
             rb.setStyleSheet(f"color: {P.text_secondary};")
             if s == "All":
@@ -463,9 +463,9 @@ class _StatusDialog(QDialog):   # small popup dialog for quickly changing the st
         lbl.setAlignment(Qt.AlignCenter)   # centres the heading horizontally
         lay.addWidget(lbl)   # adds the heading to the top of the dialog layout
 
-        self._combo = QComboBox()   # dropdown listing the three possible maintenance statuses
-        self._combo.addItems(["Open", "In Progress", "Resolved"])   # adds all three status options
-        self._combo.setCurrentIndex(1)   # pre-selects "In Progress" as the most common next step
+        self._combo = QComboBox()   # dropdown listing all possible maintenance statuses
+        self._combo.addItems(["Open", "Assigned", "Scheduled", "In Progress", "Resolved"])   # adds all five status options matching the DB CHECK constraint
+        self._combo.setCurrentIndex(3)   # pre-selects "In Progress" as the most common next step
         lay.addWidget(self._combo)   # adds the status dropdown to the layout
 
         btn = styled_button("Apply", "primary")   # blue "Apply" button that triggers _apply

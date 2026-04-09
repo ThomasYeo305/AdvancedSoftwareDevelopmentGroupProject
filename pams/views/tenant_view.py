@@ -78,6 +78,10 @@ class TenantView(QWidget):
         btn_hist.clicked.connect(self._payment_history)
         toolbar.addWidget(btn_hist)
 
+        btn_complaints = styled_button("Complaints", "outline")   # outline button to view complaint logs for the selected tenant
+        btn_complaints.clicked.connect(self._complaint_history)
+        toolbar.addWidget(btn_complaints)
+
         toolbar.addStretch()   # pushes the record count label to the far right
         self._count_lbl = QLabel("")
         self._count_lbl.setFont(qfont(F.small))
@@ -200,6 +204,17 @@ class TenantView(QWidget):
             return
         payments = db.get_tenant_payments(self._selected_id)   # fetches all payment records for this specific tenant
         dlg = _PaymentHistoryDialog(self, tenant, payments)   # opens the read-only payment history dialog
+        dlg.exec()
+
+    def _complaint_history(self):
+        if not self._selected_id:
+            QMessageBox.warning(self, "Selection", "Please select a tenant first.")
+            return
+        tenant = db.get_tenant_by_id(self._selected_id)
+        if not tenant:
+            return
+        complaints = db.get_tenant_complaints(self._selected_id)   # fetches all complaint records for this tenant
+        dlg = _ComplaintHistoryDialog(self, tenant, complaints)   # opens the read-only complaint log dialog
         dlg.exec()
 
 
@@ -436,3 +451,47 @@ class _PaymentHistoryDialog(QDialog):
         btn.setFixedWidth(120)
         btn.clicked.connect(self.accept)   # accept() closes the dialog returning QDialog.Accepted
         lay.addWidget(btn, 0, Qt.AlignCenter)   # centred below the table
+
+
+# ──────────────────────────────────────────────────────────
+# COMPLAINT HISTORY DIALOG
+# ──────────────────────────────────────────────────────────
+class _ComplaintHistoryDialog(QDialog):
+    def __init__(self, parent, tenant: dict, complaints: list):
+        super().__init__(parent)
+        self.setWindowTitle(f"Complaint Log — {tenant['full_name']}")
+        self.setMinimumSize(620, 420)
+        self.resize(620, 420)
+
+        lay = QVBoxLayout(self)
+        title = QLabel(f"Complaint Log: {tenant['full_name']}")
+        title.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        title.setStyleSheet(f"color: {P.text_primary};")
+        title.setAlignment(Qt.AlignCenter)
+        lay.addWidget(title)
+
+        sub = QLabel(f"NI: {tenant['ni_number']}  |  "
+                     f"Apt: {tenant.get('apt_number') or '—'}")
+        sub.setFont(qfont(F.small))
+        sub.setStyleSheet(f"color: {P.text_secondary};")
+        sub.setAlignment(Qt.AlignCenter)
+        lay.addWidget(sub)
+
+        cols = [("#", 40), ("Subject", 180), ("Status", 80),
+                ("Reported", 90), ("Resolved", 90)]
+        table, model = make_table(lay, cols)
+        for c in complaints:
+            color = STATUS_COLORS.get(c["status"], P.text_muted)
+            table_insert(model, [
+                str(c["id"]),
+                c["title"],
+                badge_text(c["status"]),
+                fmt_date(c["created_at"]),
+                fmt_date(c.get("resolved_at")),
+            ], color)
+
+        btn = styled_button("Close", "outline")
+        btn.setFixedHeight(38)
+        btn.setFixedWidth(120)
+        btn.clicked.connect(self.accept)
+        lay.addWidget(btn, 0, Qt.AlignCenter)

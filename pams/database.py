@@ -159,7 +159,7 @@ def _create_schema():
         rooms        INTEGER NOT NULL DEFAULT 1,         -- total number of rooms in this apartment unit
         monthly_rent REAL    NOT NULL,                   -- monthly rent amount in pounds sterling
         status       TEXT    NOT NULL DEFAULT 'Vacant'
-                        CHECK(status IN ('Vacant','Occupied','Maintenance')),  -- current availability status
+                        CHECK(status IN ('Vacant','Occupied','Maintenance','Reserved')),  -- current availability status
         floor        INTEGER NOT NULL DEFAULT 1,         -- which floor the apartment is on in the building
         description  TEXT    NOT NULL DEFAULT '',        -- optional free-text description shown on apartment cards
         FOREIGN KEY (location) REFERENCES locations(name) ON UPDATE CASCADE  -- links to locations table; updates propagate if city renamed
@@ -440,7 +440,7 @@ def _seed_data():
         (tid("NI-CC345678C"),aid("APT-201"),"Cracked Window",  "Bedroom window cracked",             "Medium",  "Open",       _days_from_today(-2), None,               None,                  uid("maint1"),  0.0,0.0,0,""),    # newly reported cracked window in APT-201, not yet assigned
         (tid("NI-DD456789D"),aid("APT-202"),"Lift Fault",     "Lift on floor 2 not stopping",        "Critical","Open",       _days_from_today(-1), None,               None,                  uid("maint1"),  0.0,0.0,0,""),    # critical lift fault in APT-202 reported yesterday
         (tid("NI-EE567890E"),aid("APT-L01"),"Pest Control",   "Cockroaches reported in kitchen",     "Medium",  "Resolved",   _days_from_today(-30),_days_from_today(-26),_days_from_today(-25),uid("maint2"),200.0,5.0,1,"Professional extermination"),   # pest issue resolved in London APT-L01
-        (tid("NI-FF678901F"),aid("APT-L02"),"Faulty Electrics","Intermittent power in living room",  "High",    "In Progress",_days_from_today(-3), _days_from_today(1), None,                  uid("maint2"),  0.0,0.0,1,"Electrician booked"),    # electrical fault in London APT-L02, electrician coming tomorrow
+        (tid("NI-FF678901F"),aid("APT-L02"),"Faulty Electrics","Intermittent power in living room",  "High",    "Scheduled",  _days_from_today(-3), _days_from_today(1), None,                  uid("maint2"),  0.0,0.0,1,"Electrician booked"),    # electrical fault in London APT-L02, electrician scheduled for tomorrow
         (tid("NI-GG789012G"),aid("APT-M01"),"Damp Patch",     "Damp patch on bathroom ceiling",     "Medium",  "Assigned",   _days_from_today(-7), _days_from_today(3), None,                  uid("maint1"), 0.0,0.0,1,"Damp specialist assigned"),   # damp in Manchester APT-M01, specialist assigned
         (tid("NI-HH890123H"),aid("APT-C01"),"Blocked Drain",  "Shower drain slow to empty",          "Low",     "Resolved",   _days_from_today(-14),_days_from_today(-12),_days_from_today(-12),uid("maint1"),45.0,1.5,1,"Drain cleared"),    # drain cleared in Cardiff APT-C01 — cost £45, 1.5 hours
     ]
@@ -840,16 +840,23 @@ def get_all_maintenance(location=None) -> list:
 
 def add_maintenance(tenant_id, apt_id, title, description,
                     priority="Medium", assigned_to=None, scheduled_date=None):
+    # Determine initial status based on assignment and scheduling
+    status = "Open"
+    if assigned_to:
+        status = "Assigned"   # auto-transitions to Assigned when a worker is selected
+    if scheduled_date:
+        status = "Scheduled"   # auto-transitions to Scheduled when a date is set (implies assignment too)
     return _db.executeUpdate("""
         INSERT INTO maintenance(tenant_id,apt_id,title,description,priority,
-            assigned_to,scheduled_date,reported_date)
-        VALUES(?,?,?,?,?,?,?,date('now'))
+            assigned_to,scheduled_date,reported_date,status)
+        VALUES(?,?,?,?,?,?,?,date('now'),?)
     """, (
         int(tenant_id) if tenant_id else None,   # casts to int if provided, None if no tenant linked
         int(apt_id) if apt_id else None,          # casts to int if provided, None if no apartment linked
         title, description or "", priority,
         int(assigned_to) if assigned_to else None,   # casts to int the ID of the assigned maintenance worker, or None if unassigned
-        scheduled_date   # scheduled date string or None
+        scheduled_date,   # scheduled date string or None
+        status   # initial status based on assignment/scheduling state
     ))   # inserts the new maintenance request with today's date as the reported_date
 
 
@@ -872,9 +879,9 @@ def update_maintenance_status(mid, status):
 
 def update_maintenance_schedule(mid, scheduled_date, notes=""):
     return _db.executeUpdate("""
-        UPDATE maintenance SET scheduled_date=?, communication_sent=1, notes=?
+        UPDATE maintenance SET scheduled_date=?, communication_sent=1, status='Scheduled', notes=?
         WHERE id=?
-    """, (scheduled_date, notes or "", mid))   # sets the scheduled start date, marks communication_sent=1 (notification sent to tenant), and saves notes
+    """, (scheduled_date, notes or "", mid))   # sets the scheduled start date, marks communication_sent=1 (notification sent to tenant), auto-transitions status to 'Scheduled', and saves notes
 
 
 def get_maintenance_staff(location=None) -> list:
@@ -922,6 +929,19 @@ def get_all_complaints(location=None) -> list:
     if location and location != "All":   # if a city filter was provided
         rows = [r for r in rows if r.get("location") == location]   # keeps only complaints from tenants in that city
     return [dict(r) for r in rows]   # converts each result row to a plain dict for the complaints view table
+
+
+def get_tenant_complaints(tenant_id) -> list:
+    """Return all complaints for a specific tenant, newest first."""
+    rows = _db.executeQuery("""
+        SELECT c.*, t.full_name, a.apt_number, a.location
+        FROM complaints c
+        LEFT JOIN tenants t ON c.tenant_id = t.id
+        LEFT JOIN apartments a ON t.apt_id = a.id
+        WHERE c.tenant_id=?
+        ORDER BY c.created_at DESC
+    """, (int(tenant_id),))   # fetches all complaints raised by this specific tenant
+    return [dict(r) for r in rows]
 
 
 def add_complaint(tenant_id, title, description):
