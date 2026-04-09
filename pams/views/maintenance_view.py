@@ -17,7 +17,7 @@ from ..theme import PALETTE as P, FONTS as F, DIMS as D
 from ..widgets import (
     qfont, Card, section_header, make_table, table_clear,
     table_insert, table_selected_id, badge_text, styled_button, Toast,
-    PRIORITY_COLORS,   # PRIORITY_COLORS maps High/Medium/Low to red/amber/green
+    PRIORITY_COLORS, fmt_date,   # PRIORITY_COLORS maps High/Medium/Low to red/amber/green
 )
 from .. import database as db   # all maintenance, tenant and staff SQL queries
 
@@ -150,9 +150,9 @@ class MaintenanceView(QWidget):
                 m["priority"],
                 badge_text(m["status"]),   # badge symbol for Open/In Progress/Resolved
                 m.get("staff_name") or "Unassigned",   # assigned staff name or 'Unassigned'
-                m["reported_date"],
-                m.get("scheduled_date") or "—",   # dash if no scheduled date set
-                m.get("resolved_date") or "—",   # dash if not yet resolved
+                fmt_date(m["reported_date"]),
+                fmt_date(m.get("scheduled_date")),   # dash if no scheduled date set
+                fmt_date(m.get("resolved_date")),   # dash if not yet resolved
                 f"£{m.get('cost') or 0:,.0f}",   # maintenance cost formatted with £
             ], color)
         self._selected_id = None   # clears selection after reload
@@ -184,10 +184,10 @@ class MaintenanceView(QWidget):
             ("Priority",    m["priority"],                   pri_color),   # priority shown in its own colour (red/amber/green)
             ("Status",      badge_text(m["status"]),         P.text_primary),
             ("Tenant",      m.get("full_name") or "—",      P.text_secondary),
-            ("Reported",    m["reported_date"],              P.text_secondary),
-            ("Scheduled",   m.get("scheduled_date") or "—", P.info),   # cyan for the scheduled date
+            ("Reported",    fmt_date(m["reported_date"]),              P.text_secondary),
+            ("Scheduled",   fmt_date(m.get("scheduled_date")), P.info),   # cyan for the scheduled date
             ("Notified",    "Yes" if m.get("communication_sent") else "No", P.info),   # shows whether tenant was notified
-            ("Resolved",    m.get("resolved_date") or "—",  P.text_secondary),
+            ("Resolved",    fmt_date(m.get("resolved_date")),  P.text_secondary),
             ("Cost (£)",    f"£{m.get('cost') or 0:,.2f}",  P.warning),   # amber colour for cost
             ("Time (hrs)",  str(m.get("time_spent") or 0),  P.text_secondary),
             ("Assigned To", m.get("staff_name") or "—",     P.text_secondary),

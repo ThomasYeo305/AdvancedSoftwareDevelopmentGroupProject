@@ -243,12 +243,9 @@ NAV_ITEMS = {
     ],
     "Manager": [
         ("", "Dashboard",    "dashboard"),    # shows the manager's multi-city KPI overview with city-level performance rings
-        ("", "Tenants",      "tenants"),      # shows full tenant management — managers can view all cities
-        ("", "Apartments",   "apartments"),   # shows apartment management across all managed locations
-        ("", "Payments",     "payments"),     # shows payment tracking with collected vs. pending breakdown
-        ("", "Maintenance",  "maintenance"),  # shows maintenance requests; managers can assign and track resolutions
-        ("", "Reports",      "reports"),      # shows the full cross-city performance report (SD5 generateReport)
-    ],
+        ("", "Apartments",   "apartments"),   # shows apartment occupancy levels across all managed locations (per brief: oversee occupancy)
+        ("", "Reports",      "reports"),      # shows the full cross-city performance report (per brief: generate performance reports)
+    ],   # brief: Manager oversees occupancy levels, generates performance reports, and can expand the business
     "Front-Desk Staff": [
         ("", "Dashboard",    "dashboard"),    # shows the front-desk daily summary (active tenants, open maintenance)
         ("", "Tenants",      "tenants"),      # shows tenant records — front desk can register new tenants and view details
@@ -404,11 +401,11 @@ QPushButton[cssClass="ghost"]:hover {{
 /* ── QTableView ── */
 QTableView {{
     background-color: {_P.bg_card}; border: none; gridline-color: {_P.divider};   /* makes the table white with no outer border and soft divider lines between columns */
-    font-size: 12px; selection-background-color: rgba(67,97,238,0.14);             /* sets table text to 12pt and uses a semi-transparent indigo for selected row highlights */
+    font-size: 12px; color: {_P.text_primary}; selection-background-color: rgba(67,97,238,0.14);  /* sets table text to 12pt in the primary near-black colour and uses a semi-transparent indigo for selected row highlights */
     selection-color: {_P.accent}; alternate-background-color: {_P.bg_row_alt}; outline: 0;  /* colours selected cell text indigo, uses an off-white alternate row shade, hides focus outline */
 }}
 QTableView::item {{
-    padding: 8px 14px; border-bottom: 1px solid {_P.divider};   /* adds inner padding to each cell and draws a thin divider line below each row */
+    padding: 8px 14px; border-bottom: 1px solid {_P.divider};  /* adds inner padding to each cell and draws a thin divider line below each row */
 }}
 QTableView::item:hover {{
     background-color: {lerp_color(_P.accent_glow, _P.bg_card, 0.70)};  /* very faintly tints a row with indigo glow when the mouse hovers over it */

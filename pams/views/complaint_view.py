@@ -16,7 +16,7 @@ from ..theme import PALETTE as P, FONTS as F, DIMS as D   # P = brand colours, F
 from ..widgets import (
     qfont, Card, section_header, make_table, table_clear,
     table_insert, table_selected_id, badge_text, styled_button, Toast,
-    STATUS_COLORS,
+    STATUS_COLORS, fmt_date,
 )   # shared UI helpers: font builder, card panel, table factory, toast notification, status colour map
 from .. import database as db   # all database operations for complaints (get, add, updateStatus)
 
@@ -117,8 +117,8 @@ class ComplaintView(QWidget):   # main complaints panel shown inside the main ap
                 c.get("apt_number") or "—",   # shows apartment number or a dash if not linked
                 c.get("location") or "—",   # shows city or a dash if not recorded
                 badge_text(c["status"]),   # wraps the status value in a badge-style label
-                (c.get("created_at") or "")[:10],   # shows only the YYYY-MM-DD portion of the report date
-                c.get("resolved_at") or "—",   # shows resolution date or a dash if not resolved
+                fmt_date(c.get("created_at")),   # report date in UK DD/MM/YYYY format
+                fmt_date(c.get("resolved_at")),   # resolution date or dash if not resolved
             ], color)   # inserts this row into the table model with its status colour
             cnt += 1   # increments the visible row counter
         self._count_lbl.setText(f"{cnt} complaint(s)")   # updates the count label with how many complaints are visible
@@ -151,8 +151,8 @@ class ComplaintView(QWidget):   # main complaints panel shown inside the main ap
             ("Apartment", c.get("apt_number") or "—",    P.text_secondary),
             ("City",      c.get("location") or "—",      P.text_secondary),
             ("Status",    badge_text(c["status"]),        P.text_primary),
-            ("Reported",  (c.get("created_at") or "")[:10], P.text_secondary),
-            ("Resolved",  c.get("resolved_at") or "—",   P.text_secondary),
+            ("Reported",  fmt_date(c.get("created_at")), P.text_secondary),
+            ("Resolved",  fmt_date(c.get("resolved_at")),   P.text_secondary),
         ]   # list of (label, value, colour) tuples that define every detail row shown in the right panel
         for label, value, color in details:
             row = QHBoxLayout()   # each detail item is a horizontal pair: label on left, value on right

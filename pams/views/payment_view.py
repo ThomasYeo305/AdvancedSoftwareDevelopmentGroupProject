@@ -17,7 +17,7 @@ from ..theme import PALETTE as P, FONTS as F, DIMS as D   # design tokens
 from ..widgets import (
     qfont, Card, section_header, make_table, table_clear,
     table_insert, table_selected_id, badge_text, styled_button,
-    GradientProgressBar, Toast, STATUS_COLORS,   # GradientProgressBar used for the collection-rate bar strip
+    GradientProgressBar, Toast, STATUS_COLORS, fmt_date,   # GradientProgressBar used for the collection-rate bar strip
 )
 from .. import database as db   # all payment and tenant SQL queries
 
@@ -155,8 +155,8 @@ class PaymentView(QWidget):
                 p.get("location") or "—",   # city, dash if not recorded
                 p.get("type") or "Rent",   # defaults to 'Rent' if no type set
                 f"£{p['amount']:,.0f}",   # amount formatted with £ and comma separator
-                p["due_date"],
-                p.get("paid_date") or "—",   # dash if payment hasn't been paid yet
+                fmt_date(p["due_date"]),
+                fmt_date(p.get("paid_date")),   # dash if payment hasn't been paid yet
                 badge_text(p["status"]),   # badge symbol for Paid/Overdue/Pending
             ], color)
             cnt += 1
@@ -331,7 +331,7 @@ class _LateNoticeDialog(QDialog):
                 p.get("full_name") or "—",   # tenant name, dash if missing
                 p.get("apt_number") or "—",   # apartment unit, dash if missing
                 f"£{p['amount']:,.0f}",   # overdue amount with £ prefix
-                p["due_date"],
+                fmt_date(p["due_date"]),
                 "Yes" if p.get("late_notified") else "No",   # shows whether a notice was already sent
             ], P.danger)   # all rows in red as they are all overdue
 

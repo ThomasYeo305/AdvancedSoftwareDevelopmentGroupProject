@@ -370,14 +370,14 @@ def _seed_data():
         ("NI-AA123456A","Oliver Thompson","07700111001","oliver@email.com","Software Engineer","John Smith","1-Bedroom",    "APT-102",6,12,1050.0,1050.0),   # tenant in 1-bed APT-102 (Bristol), lease started 6mo ago ending in 12mo
         ("NI-BB234567B","Emma Williams",  "07700111002","emma@email.com",  "Nurse",           "Dr. Jones",  "1-Bedroom",    "APT-101",3, 9, 850.0, 850.0),   # tenant in studio APT-101 (Bristol)
         ("NI-CC345678C","Noah Brown",     "07700111003","noah@email.com",  "Teacher",         "Mary Green", "2-Bedroom",    "APT-201",1,11,1350.0,1350.0),   # tenant in 2-bed APT-201 (Bristol)
-        ("NI-DD456789D","Sophia Davis",   "07700111004","sophia@email.com","Accountant",      "Peter Davis","3-Bedroom",    "APT-202",4, 8,1800.0,1800.0),   # tenant in 3-bed APT-202 (Bristol)
+        ("NI-DD456789D","Sophia Davis",   "07700111004","sophia@email.com","Accountant",      "Peter Davis","3-Bedroom",    "APT-202",4, 3,1800.0,1800.0),   # tenant in 3-bed APT-202 (Bristol) — lease expiring in ~90 days for demo
         ("NI-EE567890E","Liam Wilson",    "07700111005","liam@email.com",  "Architect",       "Jane Wilson","Studio",       "APT-L01",2,10,1400.0,1400.0),   # tenant in London studio APT-L01
         ("NI-FF678901F","Isabella Moore", "07700111006","isab@email.com",  "Marketing Manager","Tom Moore", "1-Bedroom",    "APT-L02",5, 7,1750.0,1750.0),   # tenant in London 1-bed APT-L02
-        ("NI-GG789012G","Mason Taylor",   "07700111007","mason@email.com", "Chef",            "Cathy Taylor","2-Bedroom",   "APT-M01",6, 6,1100.0,1100.0),   # tenant in Manchester 2-bed APT-M01
+        ("NI-GG789012G","Mason Taylor",   "07700111007","mason@email.com", "Chef",            "Cathy Taylor","2-Bedroom",   "APT-M01",6, 1,1100.0,1100.0),   # tenant in Manchester 2-bed APT-M01 — lease expiring in ~30 days for demo
         ("NI-HH890123H","Ava Anderson",   "07700111008","ava@email.com",   "Solicitor",       "Bob Anderson","1-Bedroom",   "APT-C01",3, 9, 850.0, 850.0),   # tenant in Cardiff 1-bed APT-C01
         ("NI-II901234I","Jack Robinson",  "07700111009","jack@email.com",  "Doctor",          "NHS Trust",  "3-Bedroom",    "APT-L04",2,10,3100.0,3100.0),   # tenant in London luxury 3-bed APT-L04
         ("NI-JJ012345J","Zoe Martinez",   "07700111010","zoe@email.com",   "Designer",        "Creative Co","Studio",       "APT-M03",1,11, 750.0, 750.0),   # tenant in Manchester studio APT-M03
-        ("NI-KK123456K","Harry Evans",    "07700111011","harry@email.com", "Engineer",        "Rhys Evans", "Studio",       "APT-C03",4, 8, 700.0, 700.0),   # tenant in Cardiff studio APT-C03
+        ("NI-KK123456K","Harry Evans",    "07700111011","harry@email.com", "Engineer",        "Rhys Evans", "Studio",       "APT-C03",4, 2, 700.0, 700.0),   # tenant in Cardiff studio APT-C03 — lease expiring in ~60 days for demo
     ]
     for ni,name,phone,email,occ,ref,req,apt_num,back,fwd,dep,rent in tenants_data:   # unpacks each tenant tuple
         ls, le = _lr(back, fwd)   # calculates lease start and end dates for this tenant
@@ -1141,9 +1141,9 @@ def get_expiring_leases(days=30, location=None) -> list:
         SELECT t.*, a.apt_number, a.location
         FROM tenants t
         LEFT JOIN apartments a ON t.apt_id=a.id
-        WHERE t.status='Active' AND t.lease_end BETWEEN ? AND ?
+        WHERE t.status IN ('Active', 'Leaving') AND t.lease_end BETWEEN ? AND ?
         ORDER BY t.lease_end
-    """, (today, future))   # fetches all active tenants whose lease end date falls within the warning window, sorted soonest first
+    """, (today, future))   # includes Leaving tenants too — early-leave tenants are the most urgent to show in lease tracking
     if location and location != "All":   # if a city filter was provided
         rows = [r for r in rows if r.get("location") == location]   # keeps only tenants in that city
     return [dict(r) for r in rows]   # returns the list of expiring leases for the admin dashboard warning panel

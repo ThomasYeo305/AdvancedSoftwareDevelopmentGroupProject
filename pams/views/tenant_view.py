@@ -17,7 +17,7 @@ from ..theme import PALETTE as P, FONTS as F, DIMS as D, lerp_color   # P=colour
 from ..widgets import (
     qfont, Card, section_header, make_table, table_clear,
     table_insert, table_selected_id, badge_text, styled_button, Toast,
-    STATUS_COLORS,   # STATUS_COLORS maps Active/Inactive/Leaving to green/red/amber text colours
+    STATUS_COLORS, fmt_date,   # STATUS_COLORS maps Active/Inactive/Leaving to green/red/amber text colours
 )
 from .. import database as db   # db module provides all SQL queries for tenants, payments and apartments
 
@@ -113,8 +113,8 @@ class TenantView(QWidget):
                 t.get("phone") or "—",   # dash if no phone number recorded
                 t.get("apt_number") or "—",   # dash if no apartment assigned
                 t.get("location") or "—",   # dash if no city/location recorded
-                t.get("lease_start") or "—",
-                t.get("lease_end") or "—",
+                fmt_date(t.get("lease_start")),
+                fmt_date(t.get("lease_end")),
                 f"£{t.get('monthly_rent') or 0:,.0f}",   # formats rent as £1,200 with comma thousands separator
                 badge_text(t["status"]),   # converts status string to a coloured badge symbol
             ], color)
@@ -426,8 +426,8 @@ class _PaymentHistoryDialog(QDialog):
                 str(p["id"]),
                 f"£{p['amount']:,.2f}",   # formats amount with £ prefix and 2 decimal places
                 p.get("type") or "Rent",   # defaults to 'Rent' if no payment type is set
-                p["due_date"],
-                p.get("paid_date") or "—",   # shows dash if the payment has not been paid yet
+                fmt_date(p["due_date"]),
+                fmt_date(p.get("paid_date")),   # shows dash if the payment has not been paid yet
                 badge_text(p["status"]),   # badge symbol for the payment status
             ], color)
 

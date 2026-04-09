@@ -20,7 +20,7 @@ from ..widgets import (
     qfont, Card, StatCard, StatusRing, GradientProgressBar,
     section_header, make_table, table_insert, badge_text,
     styled_button, _blend, Toast,
-    STATUS_COLORS, PRIORITY_COLORS,
+    STATUS_COLORS, PRIORITY_COLORS, fmt_date,
 )   # all shared widget builders and helpers used to build the dashboard panels
 from .. import database as db   # the database module for fetching live data for all dashboard KPIs and tables
 
@@ -194,7 +194,7 @@ class DashboardView(QWidget):
             table_insert(model, [
                 t["full_name"],
                 t.get("apt_number") or "—",   # shows a dash if the tenant has no apartment assigned
-                t.get("lease_end") or "—",   # shows a dash if the lease end date is not set
+                fmt_date(t.get("lease_end")),   # lease end in UK DD/MM/YYYY format
                 badge_text(t["status"]),   # converts status to a coloured circle badge symbol
             ], color)
         return card
@@ -473,7 +473,7 @@ class DashboardView(QWidget):
             table_insert(model, [
                 p["full_name"],
                 f"£{p['amount']:,.0f}",   # formats the amount with comma separator and £ prefix
-                p["due_date"],
+                fmt_date(p["due_date"]),
                 badge_text(p["status"]),   # converts the status to a badge symbol
             ], color)
         return card
@@ -493,7 +493,7 @@ class DashboardView(QWidget):
                 m.get("full_name") or "—",   # shows a dash if the maintenance request has no linked tenant
                 m["priority"],
                 badge_text(m["status"]),   # badge symbol for the current maintenance status
-                m["reported_date"],
+                fmt_date(m["reported_date"]),
             ], color)
         return card
 

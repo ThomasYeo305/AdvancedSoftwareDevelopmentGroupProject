@@ -36,6 +36,17 @@ def _blend(c1: str, c2: str, t: float) -> str:
     return lerp_color(c1, c2, t)   # delegates to the shared lerp_color helper; blends c1 toward c2 by amount t (0.0=c1, 1.0=c2)
 
 
+def fmt_date(d) -> str:
+    """Convert a YYYY-MM-DD date string to UK format DD/MM/YYYY. Returns '—' for None/empty."""
+    if not d:
+        return "—"
+    s = str(d)[:10]   # takes only the YYYY-MM-DD portion even if a full datetime string is passed
+    parts = s.split("-")
+    if len(parts) == 3 and len(parts[0]) == 4:
+        return f"{parts[2]}/{parts[1]}/{parts[0]}"   # reorders to DD/MM/YYYY for UK standard display
+    return s   # returns as-is if the string is not in expected ISO format
+
+
 # ──────────────────────────────────────────────────────────
 # VECTOR ICON PAINTER
 # ──────────────────────────────────────────────────────────
@@ -602,8 +613,7 @@ def table_insert(model: QStandardItemModel, values: list,
     for val in values:
         item = QStandardItem(str(val) if val is not None else "—")   # converts each value to a string, showing a dash for None/empty values
         item.setEditable(False)   # makes this individual cell non-editable so users can't accidentally change the data
-        if color:
-            item.setForeground(QColor(color))   # sets the text colour for this cell (e.g. red for overdue rows)
+        item.setForeground(QColor(color if color else P.text_primary))   # always sets an explicit foreground so QSS cannot override it with an invisible system-palette colour
         items.append(item)
     model.appendRow(items)   # adds the complete list of cells as a new row at the bottom of the table
 

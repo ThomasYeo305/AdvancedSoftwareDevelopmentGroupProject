@@ -18,7 +18,7 @@ from ..theme import PALETTE as P, FONTS as F, DIMS as D, ROLE_COLORS   # P = bra
 from ..widgets import (
     qfont, Card, section_header, make_table, table_clear,
     table_insert, table_selected_id, badge_text, styled_button, Toast,
-    STATUS_COLORS,
+    STATUS_COLORS, fmt_date,
 )   # shared UI helpers: card panel, table factory, toast notification, badge formatter, role colour map
 from .. import database as db   # all database operations for user accounts (get, add, update, delete)
 
@@ -175,7 +175,7 @@ class UserView(QWidget):   # administrator-only panel for viewing, adding, editi
                 u["location"],
                 u.get("email") or "—",   # shows email or a dash if not set
                 "YES" if u["active"] else "NO",   # shows active status as "YES" or "NO"
-                (u.get("created_at") or "")[:10],   # shows only the YYYY-MM-DD portion of the creation date
+                fmt_date(u.get("created_at")),   # account creation date in UK DD/MM/YYYY format
             ], color)   # inserts this user row with its role colour
             cnt += 1   # increments the visible row counter
         self._count_lbl.setText(f"{cnt} user(s)")   # updates the count label with how many users are visible

@@ -15,7 +15,7 @@ from ..theme import PALETTE as P, FONTS as F, DIMS as D   # P = brand colours, F
 from ..widgets import (
     qfont, Card, StatCard, section_header, make_table, table_clear,
     table_insert, badge_text, StatusRing, GradientProgressBar, styled_button,
-    STATUS_COLORS,
+    STATUS_COLORS, fmt_date,
 )   # shared UI helpers: stat card, ring chart, progress bar, table factory, badge formatter
 from .. import database as db   # all database queries for occupancy, finance, maintenance, and lease data
 
@@ -251,10 +251,11 @@ class ReportView(QWidget):   # main reports panel showing occupancy, financial, 
         for row in occ_data:
             tot = max(row["total"], 1)   # total unit count (clamped to 1 to prevent division by zero)
             occ = row["occupied"]   # occupied unit count for this city
+            city_color = CITY_COLORS.get(row["location"], P.text_secondary)   # colours each city row in its brand colour to match the ring charts above
             table_insert(mdl, [
                 row["location"], str(tot), str(occ),
                 f"{int(occ/tot*100)}%",   # calculates and formats occupancy rate as a percentage string
-            ])   # inserts this city's row (no colour arg = default text colour)
+            ], city_color)   # inserts this city's row coloured with its brand colour
         lay.addWidget(loc_card)   # adds the per-city summary table to the financial report
 
         # Payment table
@@ -269,7 +270,7 @@ class ReportView(QWidget):   # main reports panel showing occupancy, financial, 
             table_insert(mdl2, [
                 p.get("full_name") or "—",   # tenant name or dash if not linked
                 f"£{p['amount']:,.0f}",   # formats the payment amount as "£1,200"
-                p["due_date"],   # due date string (YYYY-MM-DD)
+                fmt_date(p["due_date"]),   # due date in UK DD/MM/YYYY format
                 p.get("type") or "Rent",   # payment type or default to "Rent"
                 badge_text(p["status"]),   # wraps the status in a badge-style label
             ], color)   # inserts this payment row with its status colour
@@ -324,14 +325,15 @@ class ReportView(QWidget):   # main reports panel showing occupancy, financial, 
         ]   # column names and pixel widths for the 6-column maintenance detail table
         tbl, mdl = make_table(mc.body_layout(), cols)   # creates the maintenance detail table inside the card
         for m in db.get_all_maintenance(self._loc):
+            row_color = STATUS_COLORS.get(m["status"], P.text_muted)   # colours row by status: amber=Open, blue=In Progress, green=Resolved
             table_insert(mdl, [
                 m["title"],   # short issue title
                 m["priority"],   # priority level (High, Medium, or Low)
                 badge_text(m["status"]),   # wraps the status in a badge-style label
                 f"£{m.get('cost') or 0:,.0f}",   # formats the cost as "£500" (0 if not yet resolved)
                 str(m.get("time_spent") or 0),   # time spent in hours (0 if not yet resolved)
-                m.get("resolved_date") or "—",   # resolved date or dash if still open
-            ])   # inserts this maintenance row (no colour arg = default text colour)
+                fmt_date(m.get("resolved_date")),   # resolved date in DD/MM/YYYY or dash if still open
+            ], row_color)   # inserts this maintenance row coloured by its status
         lay.addWidget(mc, 1)   # adds the detailed maintenance table, giving it all remaining vertical space
 
     # ──────────────────────────────────────────────────────
@@ -387,7 +389,7 @@ class ReportView(QWidget):   # main reports panel showing occupancy, financial, 
                 t["ni_number"],   # tenant's national insurance number
                 t.get("apt_number") or "—",   # apartment number or dash if not linked
                 t.get("location") or "—",   # city or dash if not linked
-                t.get("lease_end") or "—",   # lease end date (YYYY-MM-DD) or dash
+                fmt_date(t.get("lease_end")),   # lease end in UK DD/MM/YYYY format
                 badge_text(t["status"]),   # wraps the tenant status in a badge-style label
             ], P.warning)   # inserts the row in amber to highlight the urgency of an expiring lease
         self._lease_summary_lbl.setText(
