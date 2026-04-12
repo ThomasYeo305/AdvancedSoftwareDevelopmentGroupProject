@@ -13,7 +13,7 @@
 from __future__ import annotations   # allows using 'dict | None' type hints on older Python 3.10
 
 import copy           # provides deep-copy utilities (available for callers if needed)
-import datetime       # used to get today's date and calculate future/past dates for leases and payments
+from datetime import datetime        # used to get today's date and calculate future/past dates for leases and payments
 import hashlib        # provides the PBKDF2-HMAC function used to securely hash user passwords
 import os             # used to build the absolute path to the database file relative to this module
 import sqlite3        # the built-in SQLite library — provides Connection, Cursor, and Row objects
@@ -653,31 +653,117 @@ def add_tenant(ni, name, phone, email, occupation, reference,
     SD2: Register New Tenant.
     Creates tenant record, updates apartment occupancy, creates lease.
     """
-    # Validate NI uniqueness (SD2 checkExistingNiNumber)
-    if _db.executeQuery("SELECT 1 FROM tenants WHERE ni_number=?", (ni,)):   # checks if this NI number is already registered in the system
-        raise ValueError(f"NI number '{ni}' already exists in the system.")   # raises an error that the UI will catch and show to the user
+
+    # -----------------------------
+    # Input validation
+    # -----------------------------
+
+    # Check NI number is not empty or just spaces
+    if not ni or not str(ni).strip():
+        raise ValueError("NI number is required.")  # prevents blank NI numbers being stored
+
+    # Check tenant name is not empty
+    if not name or not str(name).strip():
+        raise ValueError("Tenant name is required.")  # ensures every tenant has a valid name
+
+    # Convert deposit to float and validate numeric input
+    try:
+        deposit = float(deposit)
+    except (TypeError, ValueError):
+        raise ValueError("Deposit must be a valid number.")  # stops text like "abc"
+
+    # Ensure deposit is not negative
+    if deposit < 0:
+        raise ValueError("Deposit cannot be negative.")  # prevents invalid financial data
+
+    # Convert monthly rent to float and validate numeric input
+    try:
+        monthly_rent = float(monthly_rent)
+    except (TypeError, ValueError):
+        raise ValueError("Monthly rent must be a valid number.")  # prevents invalid input
+
+    # Ensure rent is a positive value
+    if monthly_rent <= 0:
+        raise ValueError("Monthly rent must be greater than 0.")  # avoids negative or zero rent
+
+    # Validate lease date format and convert to datetime objects
+    try:
+        start_date = datetime.strptime(lease_start, "%Y-%m-%d")
+        end_date = datetime.strptime(lease_end, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError("Lease dates must be in YYYY-MM-DD format.")  # ensures correct format
+
+    # Ensure lease end date is after start date
+    if end_date < start_date:
+        raise ValueError("Lease end date cannot be before lease start date.")  # prevents logical errors
+
+    # -----------------------------
+    # Business rule validation
+    # -----------------------------
+
+    # Check NI uniqueness (SD2: checkExistingNiNumber)
+    if _db.executeQuery("SELECT 1 FROM tenants WHERE ni_number=?", (ni,)):
+        raise ValueError(f"NI number '{ni}' already exists in the system.")  
+        # prevents duplicate tenants with same NI
+
+    # -----------------------------
+    # Insert tenant into database
+    # -----------------------------
 
     _db.executeUpdate("""
         INSERT INTO tenants(ni_number,full_name,phone,email,occupation,reference,
             apartment_requirements,apt_id,lease_start,lease_end,deposit,monthly_rent)
         VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (ni, name, phone or "", email or "", occupation or "", reference or "",
-          apartment_requirements or "", apt_id, lease_start, lease_end,
-          float(deposit), float(monthly_rent)))   # inserts the new tenant record; empty strings replace None for optional text fields
+    """, (
+        ni.strip(),                     # remove leading/trailing spaces
+        name.strip(),                   # clean tenant name
+        phone or "",                   # replace None with empty string
+        email or "",
+        occupation or "",
+        reference or "",
+        apartment_requirements or "",
+        apt_id,
+        lease_start,
+        lease_end,
+        deposit,
+        monthly_rent
+    ))
 
-    tenant_id = _db.executeQuery("SELECT last_insert_rowid() as id")[0]["id"]   # retrieves the auto-generated ID of the tenant just inserted
+    # Retrieve auto-generated tenant ID
+    tenant_id = _db.executeQuery("SELECT last_insert_rowid() as id")[0]["id"]
+
+    # -----------------------------
+    # Update apartment status
+    # -----------------------------
 
     # updateOccupancyStatus (SD2)
-    if apt_id:   # only updates the apartment if one was assigned
-        _db.executeUpdate("UPDATE apartments SET status='Occupied' WHERE id=?", (apt_id,))   # marks the apartment as Occupied now that a tenant has been assigned
+    if apt_id:  
+        _db.executeUpdate(
+            "UPDATE apartments SET status='Occupied' WHERE id=?",
+            (apt_id,)
+        )
+        # marks the apartment as occupied once assigned to tenant
+
+    # -----------------------------
+    # Create lease record
+    # -----------------------------
 
     # createLease (SD2)
     _db.executeUpdate("""
         INSERT INTO leases(tenant_id,apartment_id,start_date,end_date,monthly_rent,deposit)
         VALUES(?,?,?,?,?,?)
-    """, (tenant_id, apt_id, lease_start, lease_end, float(monthly_rent), float(deposit)))   # creates a formal lease record linking this tenant to their apartment
+    """, (
+        tenant_id,
+        apt_id,
+        lease_start,
+        lease_end,
+        monthly_rent,
+        deposit
+    ))
+    # creates formal lease linking tenant to apartment
 
-    return tenant_id   # returns the new tenant's ID so the caller can navigate to their profile
+    # Return tenant ID so UI or caller can use it
+    return tenant_id
 
 
 def update_tenant(tid, ni, name, phone, email, occupation,

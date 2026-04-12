@@ -1,6 +1,6 @@
 # =============================================================
 # test_pams.py
-# Automated Test Suite — Paragon Apartment Management System
+# Automated Test Suite - Paragon Apartment Management System
 #
 # Tests: 16-20 (Automated validation tests as per test plan)
 # Framework: Python unittest (built-in, no extra packages needed)
@@ -15,7 +15,7 @@ import tempfile
 import threading
 import unittest
 
-# --------------- Path setup ---------------
+# Path setup 
 # Ensures imports work whether you run from the project root or an IDE
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 if PROJECT_DIR not in sys.path:
@@ -52,9 +52,9 @@ def _bootstrap_test_db():
     return tmp_path
 
 
-# ==============================================================
+
 # Test class
-# ==============================================================
+
 class TestAutomatedValidation(unittest.TestCase):
     """
     Automated validation tests — TC16 through TC20.
@@ -62,7 +62,7 @@ class TestAutomatedValidation(unittest.TestCase):
     bypassing the GUI entirely.
     """
 
-    # ---- one-time setup: build isolated test database ----
+    #  one-time setup: build isolated test database 
     @classmethod
     def setUpClass(cls):
         cls._tmp_path = _bootstrap_test_db()
@@ -86,7 +86,7 @@ class TestAutomatedValidation(unittest.TestCase):
             (a[0] for a in apts if "UNIT-TEST-01" in a[1]), None
         )
 
-    # ---- one-time teardown: delete temp database ----
+    #  one-time teardown: delete temp database 
     @classmethod
     def tearDownClass(cls):
         try:
@@ -100,16 +100,16 @@ class TestAutomatedValidation(unittest.TestCase):
         except Exception:
             pass
 
-    # ---- per-test teardown: wipe tenants so NI duplicates can't occur ----
+    #  per-test teardown: wipe tenants so NI duplicates can't occur 
     def tearDown(self):
         conn = self.db._db.get_connection()
         conn.execute("DELETE FROM leases")
         conn.execute("DELETE FROM tenants")
         conn.commit()
 
-    # ----------------------------------------------------------
+    
     # TC16 — Valid tenant data is accepted and saved
-    # ----------------------------------------------------------
+    
     def test_16_valid_tenant_data_saves_correctly(self):
         """
         TC16 | Automated | Validate tenant data
