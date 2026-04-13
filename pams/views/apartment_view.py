@@ -129,16 +129,16 @@ class ApartmentView(QWidget):
                 continue   # skips apartments not matching the search text
             if sf != "All" and a["status"] != sf:
                 continue   # skips apartments not matching the status filter
+            cnt += 1
             color = STATUS_COLORS.get(a["status"], P.text_muted)   # row text colour based on apartment status
             table_insert(self._model, [
-                str(a["id"]), a["apt_number"], a["location"],
+                str(cnt), a["apt_number"], a["location"],
                 a["type"], str(a["rooms"]),
                 f"£{a['monthly_rent']:,.0f}",   # £1,200 format with comma thousands separator
                 str(a["floor"]),
                 badge_text(a["status"]),   # badge symbol for Vacant/Occupied/Maintenance
                 a.get("description") or "—",   # dash if no description recorded
-            ], color)
-            cnt += 1
+            ], color, row_id=a["id"])   # stores DB id for selection
         self._count_lbl.setText(f"{cnt} unit(s)")   # updates the record count at the right of the toolbar
         self._selected_id = None   # clears any previous selection
 

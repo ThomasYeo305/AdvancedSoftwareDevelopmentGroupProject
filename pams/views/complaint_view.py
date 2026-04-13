@@ -113,9 +113,10 @@ class ComplaintView(QWidget):   # main complaints panel shown inside the main ap
         for c in items:
             if filt != "All" and c["status"] != filt:
                 continue   # skips this complaint if it doesn't match the active status filter
+            cnt += 1   # increments the visible row counter
             color = STATUS_COLORS.get(c["status"], P.text_muted)   # looks up the row text colour for this complaint's status
             table_insert(self._model, [
-                str(c["id"]),
+                str(cnt),
                 c["title"],
                 c.get("full_name") or "—",   # shows tenant name or a dash if not linked
                 c.get("apt_number") or "—",   # shows apartment number or a dash if not linked
@@ -123,8 +124,7 @@ class ComplaintView(QWidget):   # main complaints panel shown inside the main ap
                 badge_text(c["status"]),   # wraps the status value in a badge-style label
                 fmt_date(c.get("created_at")),   # report date in UK DD/MM/YYYY format
                 fmt_date(c.get("resolved_at")),   # resolution date or dash if not resolved
-            ], color)   # inserts this row into the table model with its status colour
-            cnt += 1   # increments the visible row counter
+            ], color, row_id=c["id"])   # stores DB id for selection
         self._count_lbl.setText(f"{cnt} complaint(s)")   # updates the count label with how many complaints are visible
         self._selected_id = None   # clears the selection after a reload
 

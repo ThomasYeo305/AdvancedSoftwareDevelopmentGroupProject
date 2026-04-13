@@ -69,7 +69,7 @@ class MaintenanceView(QWidget):
 
         self._pri_val = "All"   # default shows all priority levels
         self._pri_group = QButtonGroup(self)   # groups priority radios separately from the status radios
-        for p in ["All", "High", "Medium", "Low"]:
+        for p in ["All", "Critical", "High", "Medium", "Low"]:
             rb = QRadioButton(p)
             rb.setStyleSheet(f"color: {P.text_secondary};")
             if p == "All":
@@ -138,19 +138,21 @@ class MaintenanceView(QWidget):
         items = db.get_all_maintenance(self._loc)   # fetches all maintenance requests for the branch
         filt = self._filter_val   # current status filter ('All', 'Open', 'In Progress', 'Resolved')
         pfilt = self._pri_val   # current priority filter ('All', 'High', 'Medium', 'Low')
+        cnt = 0
         for m in items:
             if filt != "All" and m["status"] != filt:
                 continue   # skips requests not matching the current status filter
             if pfilt != "All" and m["priority"] != pfilt:
                 continue   # skips requests not matching the current priority filter
+            cnt += 1
             pri = m["priority"]
             # Resolved items are always green; active items are coloured by priority for urgency
             if m["status"] == "Resolved":
                 color = STATUS_COLORS.get("Resolved", P.success)
             else:
-                color = PRIORITY_COLORS.get(pri, P.text_muted)   # row text colour based on priority (red=High urgent, amber=Medium, green=Low)
+                color = PRIORITY_COLORS.get(pri, P.text_muted)   # row text colour based on priority (dark-red=Critical, red=High, amber=Medium, green=Low)
             table_insert(self._model, [
-                str(m["id"]),
+                str(cnt),
                 m["title"],
                 m.get("full_name") or "—",   # tenant name, dash if unlinked
                 m.get("apt_number") or "—",   # apartment unit, dash if not set
@@ -162,7 +164,7 @@ class MaintenanceView(QWidget):
                 fmt_date(m.get("scheduled_date")),   # dash if no scheduled date set
                 fmt_date(m.get("resolved_date")),   # dash if not yet resolved
                 f"£{m.get('cost') or 0:,.0f}",   # maintenance cost formatted with £
-            ], color)
+            ], color, row_id=m["id"])   # stores DB id for selection
         self._selected_id = None   # clears selection after reload
 
     def _on_select(self, index):
@@ -317,9 +319,9 @@ class _MaintDialog(QDialog):   # popup dialog for logging a brand-new maintenanc
 
         # Priority
         fl.addWidget(self._lbl("Priority"))   # adds a grey "Priority" section label
-        self._pri_combo = QComboBox()   # dropdown for selecting urgency level (High, Medium, Low)
-        self._pri_combo.addItems(["High", "Medium", "Low"])   # adds the three priority options
-        self._pri_combo.setCurrentIndex(1)   # pre-selects "Medium" as the sensible default priority
+        self._pri_combo = QComboBox()   # dropdown for selecting urgency level (Critical, High, Medium, Low)
+        self._pri_combo.addItems(["Critical", "High", "Medium", "Low"])   # adds the four priority options
+        self._pri_combo.setCurrentIndex(2)   # pre-selects "Medium" as the sensible default priority
         fl.addWidget(self._pri_combo)   # adds the priority dropdown to the form
 
         # Assign To

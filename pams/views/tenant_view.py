@@ -113,9 +113,10 @@ class TenantView(QWidget):
         for t in tenants:
             if q and q not in (t["full_name"] + t["ni_number"]).lower():
                 continue   # skips this tenant if neither their name nor NI number matches the search
+            shown += 1   # increments visible row counter
             color = STATUS_COLORS.get(t["status"], P.text_muted)   # row text colour based on tenant status
             table_insert(self._model, [
-                str(t["id"]),
+                str(shown),
                 t["ni_number"],
                 t["full_name"],
                 t.get("phone") or "—",   # dash if no phone number recorded
@@ -125,8 +126,7 @@ class TenantView(QWidget):
                 fmt_date(t.get("lease_end")),
                 f"£{t.get('monthly_rent') or 0:,.0f}",   # formats rent as £1,200 with comma thousands separator
                 badge_text(t["status"]),   # converts status string to a coloured badge symbol
-            ], color)
-            shown += 1   # increments visible row counter
+            ], color, row_id=t["id"])   # stores DB id for selection
         self._count_lbl.setText(f"{shown} record(s)")   # updates the record count at the right of the toolbar
         self._selected_id = None   # clears selection whenever the table is reloaded
 

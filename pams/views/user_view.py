@@ -170,9 +170,10 @@ class UserView(QWidget):   # administrator-only panel for viewing, adding, editi
                 continue   # skips users whose name and username don't contain the search query
             if rf != "All" and u["role"] != rf:
                 continue   # skips users whose role doesn't match the active role filter
+            cnt += 1   # increments the visible row counter
             color = ROLE_COLORS.get(u["role"], P.accent)   # looks up the row colour based on the user's role
             table_insert(self._model, [
-                str(u["id"]),
+                str(cnt),
                 u["username"],
                 u["full_name"],
                 u["role"],
@@ -180,8 +181,7 @@ class UserView(QWidget):   # administrator-only panel for viewing, adding, editi
                 u.get("email") or "—",   # shows email or a dash if not set
                 "YES" if u["active"] else "NO",   # shows active status as "YES" or "NO"
                 fmt_date(u.get("created_at")),   # account creation date in UK DD/MM/YYYY format
-            ], color)   # inserts this user row with its role colour
-            cnt += 1   # increments the visible row counter
+            ], color, row_id=u["id"])   # inserts this user row with its role colour and stores DB id
         self._count_lbl.setText(f"{cnt} user(s)")   # updates the count label with how many users are visible
         self._selected_id = None   # clears the selection after a reload
 

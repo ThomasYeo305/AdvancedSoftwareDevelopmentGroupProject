@@ -409,12 +409,15 @@ STATUS_COLORS = {
     "Leaving":     P.warning,    # maps Leaving status to the amber warning colour
     "Reserved":    P.info,       # maps Reserved status to the blue info colour
     "Maintenance": P.warning,    # maps Maintenance status to the amber warning colour
+    "Assigned":    P.info,       # maps Assigned status to the blue info colour
+    "Scheduled":   P.accent,     # maps Scheduled status to the indigo accent colour
 }
 
 PRIORITY_COLORS = {
-    "High":   P.danger,   # maps High priority to the red danger colour (most urgent)
-    "Medium": P.warning,  # maps Medium priority to the amber warning colour
-    "Low":    P.success,  # maps Low priority to the green success colour (least urgent)
+    "Critical": "#B91C1C",  # maps Critical priority to a deep dark-red colour (most urgent — more severe than High)
+    "High":     P.danger,    # maps High priority to the red danger colour
+    "Medium":   P.warning,   # maps Medium priority to the amber warning colour
+    "Low":      P.success,   # maps Low priority to the green success colour (least urgent)
 }
 
 
@@ -425,6 +428,7 @@ def badge_text(status: str) -> str:
         "Pending": "◐ ", "Open": "◐ ", "In Progress": "◑ ",                  # half-circle for in-between states
         "Inactive": "○ ", "Vacant": "○ ",                                     # hollow circle for neutral/off states
         "Overdue": "● ", "Leaving": "◐ ",                                     # solid circle for overdue (red), half for leaving
+        "Assigned": "◐ ", "Scheduled": "◐ ",                                    # half-circle for assigned and scheduled states
     }
     return f"{symbol_map.get(status, '')} {status}"   # prepends the matching symbol then adds a space before the status label
 
@@ -611,26 +615,35 @@ def table_clear(model: QStandardItemModel):
 
 
 def table_insert(model: QStandardItemModel, values: list,
-                 color: str = ""):
-    """Add a row to the model with optional text colour."""
+                 color: str = "", row_id: int | None = None):
+    """Add a row to the model with optional text colour and hidden DB id."""
     items = []
-    for val in values:
+    for i, val in enumerate(values):
         item = QStandardItem(str(val) if val is not None else "—")   # converts each value to a string, showing a dash for None/empty values
         item.setEditable(False)   # makes this individual cell non-editable so users can't accidentally change the data
         item.setForeground(QColor(color if color else P.text_primary))   # always sets an explicit foreground so QSS cannot override it with an invisible system-palette colour
+        if i == 0 and row_id is not None:
+            item.setData(row_id, Qt.UserRole)   # stores the real DB id as hidden data on the # cell so table_selected_id can retrieve it
         items.append(item)
     model.appendRow(items)   # adds the complete list of cells as a new row at the bottom of the table
 
 
 def table_selected_id(table: QTableView, model: QStandardItemModel,
                       id_column: int = 0):
-    """Return the value in `id_column` of the selected row, or None."""
+    """Return the DB id stored in `id_column` of the selected row, or None."""
     indexes = table.selectionModel().selectedRows()   # gets the list of currently selected rows from the table's selection state
     if not indexes:
         return None   # returns None when no row is selected (user hasn't clicked anything yet)
     row = indexes[0].row()   # gets the row number of the first (and only) selected row
     item = model.item(row, id_column)   # retrieves the cell at the selected row in the ID column (column 0 by default)
     if item:
+        # Try hidden UserRole data first (DB id stored by table_insert), fall back to cell text
+        data = item.data(Qt.UserRole)
+        if data is not None:
+            try:
+                return int(data)
+            except (ValueError, TypeError):
+                pass
         try:
             return int(item.text())   # converts the cell text to an integer database ID so it can be used for DB lookups
         except (ValueError, TypeError):

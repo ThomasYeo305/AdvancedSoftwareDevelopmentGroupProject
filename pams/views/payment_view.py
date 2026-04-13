@@ -152,9 +152,10 @@ class PaymentView(QWidget):
         for p in payments:
             if filt != "All" and p["status"] != filt:
                 continue   # skips payments not matching the current filter
+            cnt += 1
             color = STATUS_COLORS.get(p["status"], P.text_muted)   # text colour based on payment status
             table_insert(self._model, [
-                str(p["id"]),
+                str(cnt),
                 p.get("full_name") or "—",   # tenant name, dash if not linked
                 p.get("location") or "—",   # city, dash if not recorded
                 p.get("type") or "Rent",   # defaults to 'Rent' if no type set
@@ -162,8 +163,7 @@ class PaymentView(QWidget):
                 fmt_date(p["due_date"]),
                 fmt_date(p.get("paid_date")),   # dash if payment hasn't been paid yet
                 badge_text(p["status"]),   # badge symbol for Paid/Overdue/Pending
-            ], color)
-            cnt += 1
+            ], color, row_id=p["id"])   # stores DB id for selection
         self._count_lbl.setText(f"{cnt} record(s)")   # updates the record count label
         self._selected_id = None   # clears selection on reload
 
