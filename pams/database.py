@@ -17,7 +17,7 @@
 from __future__ import annotations   # allows using 'dict | None' type hints on older Python 3.10
 
 import copy           # provides deep-copy utilities (available for callers if needed)
-from datetime import datetime        # used to get today's date and calculate future/past dates for leases and payments
+from datetime import datetime, date, timedelta  # datetime class for strptime; date/timedelta for today() and date arithmetic
 import hashlib        # provides the PBKDF2-HMAC function used to securely hash user passwords
 import os             # used to build the absolute path to the database file relative to this module
 import sqlite3        # the built-in SQLite library — provides Connection, Cursor, and Row objects
@@ -108,11 +108,11 @@ def _hash(pw: str) -> str:
 
 
 def _today() -> str:
-    return datetime.date.today().isoformat()   # returns today's date as a string like '2026-04-06'; used for due dates and audit timestamps
+    return date.today().isoformat()   # returns today's date as a string like '2026-04-06'; used for due dates and audit timestamps
 
 
 def _days_from_today(days: int) -> str:
-    return (datetime.date.today() + datetime.timedelta(days=days)).isoformat()  # returns a date that is `days` in the future (positive) or past (negative) as an ISO string
+    return (date.today() + timedelta(days=days)).isoformat()  # returns a date that is `days` in the future (positive) or past (negative) as an ISO string
 
 
 def _row(table_rows: list) -> dict | None:
@@ -364,8 +364,8 @@ def _seed_data():
 
     def _lr(back, fwd):
         # calculates a lease date range: `back` months ago for start and `fwd` months ahead for end
-        s = (datetime.date.today() - datetime.timedelta(days=30*back)).isoformat()   # lease start date = today minus `back` months
-        e = (datetime.date.today() + datetime.timedelta(days=30*fwd)).isoformat()    # lease end date = today plus `fwd` months
+        s = (date.today() - timedelta(days=30*back)).isoformat()   # lease start date = today minus `back` months
+        e = (date.today() + timedelta(days=30*fwd)).isoformat()    # lease end date = today plus `fwd` months
         return s, e   # returns (start_date, end_date) as a pair of ISO strings
 
     # ── Tenants ───────────────────────────────────────────
@@ -407,11 +407,11 @@ def _seed_data():
     conn.commit()   # saves all lease inserts to disk
 
     # ── Payments (3 months history per tenant) ────────────
-    today = datetime.date.today()   # today's date used to calculate historical due dates
+    today = date.today()   # today's date used to calculate historical due dates
     pid_rows = _db.executeQuery("SELECT id,monthly_rent FROM tenants")   # fetches all tenants so we can create payment history for each
     for t in pid_rows:   # loops through every tenant to create 3 months of payment records
         for m in (3, 2, 1):   # iterates: 3 months ago, 2 months ago, 1 month ago
-            due = (today - datetime.timedelta(days=30*m)).replace(day=1).isoformat()   # sets due date to the 1st of the month `m` months ago
+            due = (today - timedelta(days=30*m)).replace(day=1).isoformat()   # sets due date to the 1st of the month `m` months ago
             paid = due if m > 1 else None    # marks months 3 and 2 as paid; month 1 is left unpaid (overdue) for demo realism
             status = "Paid" if paid else "Overdue"   # sets status to 'Paid' for older months and 'Overdue' for last month
             # Avoid duplicates
@@ -487,9 +487,11 @@ def init_db():
     Idempotent — safe to call multiple times.
     """
     _create_schema()   # runs all CREATE TABLE and CREATE INDEX statements (skips existing ones)
-    # Only seed if the database appears to be new/empty
+    # Seed if users are absent OR if tenants are absent (handles partial seeds caused by prior errors)
     users = _db.executeQuery("SELECT COUNT(*) as c FROM users")   # counts how many user rows already exist
-    if users and users[0]["c"] == 0:   # if the users table is empty, this is a fresh database that needs demo data
+    tenants = _db.executeQuery("SELECT COUNT(*) as c FROM tenants")  # counts how many tenant rows already exist
+    needs_seed = (not users or users[0]["c"] == 0) or (not tenants or tenants[0]["c"] == 0)
+    if needs_seed:   # seed if fresh DB or if a previous seed crashed before inserting tenants
         _seed_data()   # populates all tables with the realistic demo locations, staff, apartments, tenants, payments, maintenance, and complaints
 
 
