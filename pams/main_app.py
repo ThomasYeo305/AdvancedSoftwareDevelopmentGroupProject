@@ -2,6 +2,10 @@
 # PAMS — main_app.py
 # Primary application shell: sidebar + topbar + content area
 # Professional Corporate SaaS layout  (PySide6)
+#
+# Contributors (UI):
+#   Chouaib Hakim       — Student ID: 24018717
+#   Sinoli Rodrigo      — Student ID: 24055025
 # ============================================================
 from __future__ import annotations   # allows forward-reference type hints in Python 3.9 and earlier
 import traceback   # imports traceback so the view loader can print detailed error messages if a view fails to import

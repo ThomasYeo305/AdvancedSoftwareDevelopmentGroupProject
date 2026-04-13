@@ -2,6 +2,10 @@
 # PAMS - Paragon Apartment Management System
 # theme.py  — Design tokens, palette, and PySide6 QSS
 # Corporate SaaS — Professional Property-Tech Aesthetic
+#
+# Contributors (UI):
+#   Chouaib Hakim       — Student ID: 24018717
+#   Sinoli Rodrigo      — Student ID: 24055025
 # ============================================================
 
 from dataclasses import dataclass   # imports dataclass decorator so we can define palette/font/dimension classes with less boilerplate

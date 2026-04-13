@@ -9,6 +9,10 @@
 #
 # All public function signatures are fully backward-compatible
 # with the existing GUI views.
+#
+# Contributors (Database):
+#   Yonas Tekle         — Student ID: 21053582
+#   Thomas Yeo          — Student ID: 24029722
 # ============================================================
 from __future__ import annotations   # allows using 'dict | None' type hints on older Python 3.10
 

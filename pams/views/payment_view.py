@@ -1,6 +1,10 @@
 # ============================================================
 # PAMS — views/payment_view.py
 # Payment & Billing View (PySide6)
+#
+# Contributors (UI):
+#   Chouaib Hakim       — Student ID: 24018717
+#   Sinoli Rodrigo      — Student ID: 24055025
 # ============================================================
 from __future__ import annotations   # allows forward type hints
 import datetime   # used to calculate today's date for the default due-date placeholder

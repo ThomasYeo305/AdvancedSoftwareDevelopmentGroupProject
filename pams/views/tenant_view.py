@@ -1,6 +1,10 @@
 # ============================================================
 # PAMS — views/tenant_view.py
 # Full Tenant Management CRUD View (PySide6)
+#
+# Contributors (UI):
+#   Chouaib Hakim       — Student ID: 24018717
+#   Sinoli Rodrigo      — Student ID: 24055025
 # ============================================================
 from __future__ import annotations   # allows forward type hints in older Python versions
 import datetime, re   # datetime for lease date calculations; re for NI and email regex validation

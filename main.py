@@ -5,6 +5,10 @@
 #
 # Run:  python main.py
 # Requires: Python 3.10-3.13, PySide6
+#
+# Contributors (UI):
+#   Chouaib Hakim       — Student ID: 24018717
+#   Sinoli Rodrigo      — Student ID: 24055025
 # ============================================================
 from __future__ import annotations  # enables postponed evaluation of type hints so we can use 'dict | None' notation in older Python
 import sys, os                       # sys gives us access to the Python version and exit calls; os lets us build file paths

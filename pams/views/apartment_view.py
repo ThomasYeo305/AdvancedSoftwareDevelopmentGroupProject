@@ -1,6 +1,10 @@
 # ============================================================
 # PAMS — views/apartment_view.py
 # Apartment Management CRUD View (PySide6)
+#
+# Contributors (UI):
+#   Chouaib Hakim       — Student ID: 24018717
+#   Sinoli Rodrigo      — Student ID: 24055025
 # ============================================================
 from __future__ import annotations   # allows forward type hints without circular imports
 

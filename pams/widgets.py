@@ -1,6 +1,10 @@
 # ============================================================
 # PAMS — widgets.py
 # Reusable PySide6 UI components — Professional light theme
+#
+# Contributors (UI):
+#   Chouaib Hakim       — Student ID: 24018717
+#   Sinoli Rodrigo      — Student ID: 24055025
 # ============================================================
 from __future__ import annotations   # allows type hints like 'QWidget | None' on Python 3.10
 

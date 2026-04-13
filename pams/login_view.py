@@ -1,6 +1,10 @@
 # ============================================================
 # PAMS — login_view.py
 # Modern split-panel animated login  (PySide6)
+#
+# Contributors (UI):
+#   Chouaib Hakim       — Student ID: 24018717
+#   Sinoli Rodrigo      — Student ID: 24055025
 # ============================================================
 from __future__ import annotations   # allows forward-reference type hints in Python 3.9 and earlier
 import math, random   # math for sine/cosine used in animations; random for orb and star position generation

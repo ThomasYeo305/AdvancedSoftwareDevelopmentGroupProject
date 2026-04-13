@@ -7,6 +7,9 @@
 #
 # Run with:   python -m pytest test_pams.py -v
 #        OR:  python test_pams.py
+#
+# Contributors (Testing):
+#   Shaheena Ebadi      — Student ID: 25054539
 # =============================================================
 
 import os

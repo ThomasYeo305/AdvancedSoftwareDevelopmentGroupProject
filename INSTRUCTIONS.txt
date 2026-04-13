@@ -1,0 +1,144 @@
+============================================================
+  PAMS — Paragon Apartment Management System
+  Setup & Usage Instructions
+============================================================
+
+------------------------------------------------------------
+GROUP MEMBERS
+------------------------------------------------------------
+  UI Development:
+    Chouaib Hakim       — Student ID: 24018717
+    Sinoli Rodrigo      — Student ID: 24055025
+
+  Database Development:
+    Yonas Tekle         — Student ID: 21053582
+    Thomas Yeo          — Student ID: 24029722
+
+  Testing:
+    Shaheena Ebadi      — Student ID: 25054539
+
+------------------------------------------------------------
+SYSTEM REQUIREMENTS
+------------------------------------------------------------
+  - Python 3.10 – 3.13  (https://www.python.org/downloads/)
+  - Windows, macOS, or Linux
+
+------------------------------------------------------------
+REQUIRED PYTHON PACKAGES  (pip list)
+------------------------------------------------------------
+  Package            Version
+  ------------------ -------
+  PySide6            6.10.2
+  PySide6_Addons     6.10.2
+  PySide6_Essentials 6.10.2
+  shiboken6          6.10.2
+  pip                26.0.1
+  setuptools         65.5.0
+
+  NOTE: Only PySide6 needs to be installed manually.
+        All other packages (sqlite3, hashlib, unittest, etc.)
+        are part of the Python standard library.
+
+------------------------------------------------------------
+INSTALLATION STEPS
+------------------------------------------------------------
+  1. Unzip the project folder (do NOT include the .venv or
+     any Python distribution folder in the ZIP).
+
+  2. Open a terminal / command prompt in the project folder.
+
+  3. (Recommended) Create a virtual environment:
+       python -m venv .venv
+
+  4. Activate the virtual environment:
+       Windows:  .venv\Scripts\activate
+       macOS/Linux:  source .venv/bin/activate
+
+  5. Install required packages:
+       pip install -r requirements.txt
+     OR manually:
+       pip install "PySide6>=6.5,<6.11"
+
+------------------------------------------------------------
+HOW TO RUN THE APPLICATION
+------------------------------------------------------------
+  From the project root folder (with venv activated):
+
+    python main.py
+
+  The application window will open.
+  On first run, the SQLite database (pams.db) is created
+  automatically in the project root and seeded with demo data.
+
+------------------------------------------------------------
+HOW TO RUN AUTOMATED TESTS
+------------------------------------------------------------
+  Run all tests (uses a temporary in-memory DB, never touches pams.db):
+
+    python -m pytest test_pams.py -v
+  OR:
+    python test_pams.py
+
+------------------------------------------------------------
+DEFAULT LOGIN CREDENTIALS
+------------------------------------------------------------
+  Role                Username          Password
+  ------------------- ----------------- ---------------
+  Administrator       admin_bristol     admin123
+  Administrator       admin_london      admin123
+  Administrator       admin_manc        admin123
+  Administrator       admin_cardiff     admin123
+  Manager             manager           manager123
+  Front-Desk Staff    frontdesk1        front123
+  Front-Desk Staff    frontdesk2        front123
+  Finance Manager     finance1          finance123
+  Finance Manager     finance2          finance123
+  Maintenance Staff   maint1            maint123
+  Maintenance Staff   maint2            maint123
+
+  NOTE: The Administrator role has full access for their
+        assigned location. The Manager role can view all
+        locations and expand to new cities.
+
+------------------------------------------------------------
+DATABASE
+------------------------------------------------------------
+  - Database type: SQLite (single-file, no server needed)
+  - Database file: pams.db  (auto-created in project root)
+  - To reset to demo data: delete pams.db and restart the app.
+  - The database is NOT included in the ZIP submission.
+    It is generated fresh on first launch.
+
+------------------------------------------------------------
+PROJECT STRUCTURE
+------------------------------------------------------------
+  main.py               — Application entry point
+  requirements.txt      — PySide6 dependency
+  INSTRUCTIONS.txt      — This file
+  test_pams.py          — Automated test suite
+  pams/
+    database.py         — SQLite database layer
+    login_view.py       — Login screen UI
+    main_app.py         — Main application shell
+    theme.py            — Design tokens & stylesheet
+    widgets.py          — Reusable UI components
+    views/
+      apartment_view.py   — Apartment management
+      complaint_view.py   — Complaints management
+      dashboard_view.py   — Role-aware dashboard
+      maintenance_view.py — Maintenance requests
+      payment_view.py     — Payments & billing
+      report_view.py      — Reports & analytics
+      tenant_view.py      — Tenant management
+      user_view.py        — User/account management
+
+------------------------------------------------------------
+NOTES
+------------------------------------------------------------
+  - Do NOT include the .venv folder or any Python
+    distribution folder in your ZIP submission.
+  - The pams.db SQLite database file does not need to be
+    included; it is generated automatically on first run.
+  - pytest is only needed to run tests with the 'pytest'
+    command; the tests also run with plain 'python test_pams.py'.
+============================================================

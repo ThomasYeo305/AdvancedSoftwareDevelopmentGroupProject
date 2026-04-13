@@ -1,6 +1,10 @@
 # ============================================================
 # PAMS — views/report_view.py
 # Reporting & Analytics View (PySide6)
+#
+# Contributors (UI):
+#   Chouaib Hakim       — Student ID: 24018717
+#   Sinoli Rodrigo      — Student ID: 24055025
 # ============================================================
 from __future__ import annotations   # enables forward-reference type hints without quote wrapping
 

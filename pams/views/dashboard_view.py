@@ -1,6 +1,10 @@
 # ============================================================
 # PAMS — views/dashboard_view.py
 # Role-aware dashboard with KPIs, city rings, quick forms (PySide6)
+#
+# Contributors (UI):
+#   Chouaib Hakim       — Student ID: 24018717
+#   Sinoli Rodrigo      — Student ID: 24055025
 # ============================================================
 from __future__ import annotations
 import datetime, random   # datetime for today's date in banners and lease calc; random for decorative building windows

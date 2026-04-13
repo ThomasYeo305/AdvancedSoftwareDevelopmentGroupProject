@@ -1,6 +1,10 @@
 # ============================================================
 # PAMS — views/maintenance_view.py
 # Maintenance Request Management View (PySide6)
+#
+# Contributors (UI):
+#   Chouaib Hakim       — Student ID: 24018717
+#   Sinoli Rodrigo      — Student ID: 24055025
 # ============================================================
 from __future__ import annotations   # allows forward type hints
 import datetime   # imported for potential date calculations (unused directly but kept for future use)
