@@ -108,6 +108,9 @@ DATABASE
   - To reset to demo data: delete pams.db and restart the app.
   - The database is NOT included in the ZIP submission.
     It is generated fresh on first launch.
+  - pams_dump.sql — SQL dump of the fully-seeded demo database,
+    included for submission / review purposes only.
+    The running application does NOT use this file.
 
 ------------------------------------------------------------
 PROJECT STRUCTURE
@@ -116,6 +119,8 @@ PROJECT STRUCTURE
   requirements.txt      — PySide6 dependency
   INSTRUCTIONS.txt      — This file
   test_pams.py          — Automated test suite
+  pams_dump.sql         — SQL dump of the seeded demo database
+                          (for submission/review; not used at runtime)
   pams/
     database.py         — SQLite database layer
     login_view.py       — Login screen UI
