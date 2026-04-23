@@ -38,7 +38,8 @@ class ApartmentView(QWidget):
     def __init__(self, user: dict, parent=None):
         super().__init__(parent)
         self._user = user   # full user dict containing role and location for permission checks
-        self._loc = user.get("location")   # branch filter applied to apartment DB queries
+        # Manager can see all locations; all other roles are scoped to their assigned branch
+        self._loc = None if user.get("role") == "Manager" else user.get("location")
         self._selected_id = None   # tracks which apartment row is currently selected
         self._build()   # constructs toolbar, filter row, and table card
         self._reload()   # loads all apartment rows from the database
